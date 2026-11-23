@@ -143,6 +143,19 @@ class AppStore {
   static Future<void> setReminders(bool v) async { await prefs.setBool('reminders',v); }
   static Set<String> get checkedGroceries => (prefs.getStringList('checked_groceries') ?? []).toSet();
   static Future<void> setChecked(Set<String> v) async { await prefs.setStringList('checked_groceries',v.toList()); }
+  static Map<String, int> get mealRatings {
+    try {
+      final raw=prefs.getString('meal_ratings');
+      if(raw==null||raw.isEmpty) return {};
+      return (jsonDecode(raw) as Map<String,dynamic>).map((k,v)=>MapEntry(k,(v as num).toInt()));
+    } catch (_) { return {}; }
+  }
+  static String mealRatingKey(DateTime date,String slot) => '${date.year}-${date.month}-${date.day}:$slot';
+  static Future<void> setMealRating(DateTime date,String slot,int rating) async {
+    final ratings=mealRatings;
+    ratings[mealRatingKey(date,slot)]=rating;
+    await prefs.setString('meal_ratings',jsonEncode(ratings));
+  }
   static List<String> get favourites => prefs.getStringList('favourites') ?? [];
   static Future<void> saveMealOverrides(String value) async { await prefs.setString('meal_overrides', value); }
   static Future<void> toggleFavourite(String key) async {
@@ -238,9 +251,9 @@ class HomePage extends StatelessWidget {
       ]))),
       Card(child:ListTile(leading:const Icon(Icons.event),title:Text(date.day.toString()+'/'+date.month.toString()+'/'+date.year.toString()),subtitle:Text(menu.strictVeg?(mr?'कडक शाकाहारी दिवस':'Strict vegetarian day'):(mr?'शाकाहारी आणि मांसाहारी पर्याय':'Vegetarian and non-vegetarian options')),trailing:const Icon(Icons.calendar_month))),
       const SizedBox(height:8),
-      MealCard(title:mr?'नाश्ता':'Breakfast',meal:menu.breakfast,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'breakfast'); onChanged(); }),
-      MealCard(title:mr?'दुपारचे जेवण':'Lunch',meal:menu.lunch,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'lunch'); onChanged(); }),
-      MealCard(title:mr?'रात्रीचे जेवण':'Dinner',meal:menu.dinner,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'dinner'); onChanged(); }),
+      MealCard(title:mr?'नाश्ता':'Breakfast',meal:menu.breakfast,marathi:mr,date:date,slot:'breakfast',onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'breakfast'); onChanged(); }),
+      MealCard(title:mr?'दुपारचे जेवण':'Lunch',meal:menu.lunch,marathi:mr,date:date,slot:'lunch',onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'lunch'); onChanged(); }),
+      MealCard(title:mr?'रात्रीचे जेवण':'Dinner',meal:menu.dinner,marathi:mr,date:date,slot:'dinner',onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'dinner'); onChanged(); }),
       Card(color:Theme.of(context).colorScheme.secondaryContainer,child:ListTile(leading:const Icon(Icons.notifications_active),title:Text(mr?'उद्याच्या तयारीची आठवण':'Tomorrow preparation reminder'),subtitle:Text(mr?'संध्याकाळी ७:०० वाजता':'Daily at 7:00 PM India time'))),
       const FestivalMenuCard()
     ]);
@@ -290,17 +303,31 @@ class MealPhoto extends StatelessWidget {
 }
 
 class MealCard extends StatelessWidget {
-  final String title; final Meal meal; final bool marathi; final VoidCallback onChanged; final VoidCallback onReplace;
-  const MealCard({super.key,required this.title,required this.meal,required this.marathi,required this.onChanged,required this.onReplace});
+  final String title; final Meal meal; final bool marathi; final DateTime date; final String slot; final VoidCallback onChanged; final VoidCallback onReplace;
+  const MealCard({super.key,required this.title,required this.meal,required this.marathi,required this.date,required this.slot,required this.onChanged,required this.onReplace});
   @override Widget build(BuildContext context) {
     final fav=AppStore.favourites.contains(meal.en);
+    final rating=AppStore.mealRatings[AppStore.mealRatingKey(date,slot)]??0;
     return Card(margin:const EdgeInsets.only(bottom:10),child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[Expanded(child:Text(title,style:Theme.of(context).textTheme.labelLarge?.copyWith(color:Theme.of(context).colorScheme.primary))),IconButton(tooltip:marathi?'जेवण बदला':'Replace meal',onPressed:onReplace,icon:const Icon(Icons.shuffle)),IconButton(onPressed:() async {await AppStore.toggleFavourite(meal.en);onChanged();},icon:Icon(fav?Icons.favorite:Icons.favorite_border,color:fav?Colors.red:null))]),
       Text(meal.name(marathi),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:10),
       MealPhoto(meal:meal),
       const SizedBox(height:6),Text((marathi?'साहित्य: ':'Ingredients: ')+meal.ingredients.join(', ')),
-      Text((marathi?'आधीची तयारी: ':'Advance prep: ')+meal.prep)
+      Text((marathi?'आधीची तयारी: ':'Advance prep: ')+meal.prep),
+      const SizedBox(height:8),
+      Row(children:[
+        Expanded(child:Text(marathi?'या जेवणाला रेटिंग द्या':'Rate this meal',style:Theme.of(context).textTheme.labelLarge)),
+        for(var star=1;star<=5;star++) IconButton(
+          visualDensity:VisualDensity.compact,
+          padding:EdgeInsets.zero,
+          constraints:const BoxConstraints(minWidth:32,minHeight:36),
+          tooltip:star.toString()+' / 5',
+          onPressed:() async {await AppStore.setMealRating(date,slot,star);onChanged();},
+          icon:Icon(star<=rating?Icons.star:Icons.star_border,color:star<=rating?Colors.amber:Colors.grey),
+        )
+      ]),
+      if(rating>0) Text(marathi?'तुमचे रेटिंग: $rating/५':'Your rating: $rating/5',style:Theme.of(context).textTheme.bodySmall)
     ])));
   }
 }
