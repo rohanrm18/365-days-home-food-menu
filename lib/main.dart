@@ -33,7 +33,14 @@ const breakfasts = <Meal>[
   Meal('Idli and chutney','इडली आणि चटणी',['Idli batter','Coconut','Roasted gram','Curry leaves'],'Check batter; prepare chutney ingredients.'),
   Meal('Sabudana khichdi','साबुदाणा खिचडी',['Sabudana','Potato','Peanuts','Cumin','Lemon'],'Soak sabudana for 4–6 hours.'),
   Meal('Besan chilla','बेसन चिल्ला',['Besan','Onion','Tomato','Coriander','Curd'],'Chop vegetables and mix dry spices.'),
-  Meal('Dosa','डोसा',['Dosa batter','Potato','Onion','Coconut'],'Check batter and prepare potato masala.')
+  Meal('Dosa','डोसा',['Dosa batter','Potato','Onion','Coconut'],'Check batter and prepare potato masala.'),
+  Meal('Vegetable paratha and curd','भाजी पराठा आणि दही',['Wheat flour','Potato','Carrot','Peas','Curd'],'Boil potato; grate vegetables and knead dough.'),
+  Meal('Moong dal dosa','मूग डाळ डोसा',['Moong dal','Ginger','Green chilli','Coriander','Curd'],'Soak moong dal for 3–4 hours; drain before grinding.'),
+  Meal('Methi thepla','मेथी थेपला',['Wheat flour','Fenugreek leaves','Curd','Sesame seeds','Spices'],'Wash and finely chop methi; keep curd and flour ready.'),
+  Meal('Misal pav (mild)','मिसळ पाव',['Matki','Onion','Tomato','Goda masala','Pav'],'Soak matki overnight; prepare usal base and keep pav fresh.'),
+  Meal('Vegetable sandwich','भाजी सँडविच',['Bread','Potato','Cucumber','Tomato','Butter'],'Boil potato and slice vegetables; refrigerate covered.'),
+  Meal('Appe and coconut chutney','आप्पे आणि खोबऱ्याची चटणी',['Idli batter','Onion','Carrot','Coconut','Curry leaves'],'Check fermented batter; chop vegetables and prepare chutney.'),
+  Meal('Ragi porridge and fruit','नाचणी सत्त्व आणि फळे',['Ragi flour','Milk','Banana','Jaggery','Cardamom'],'Measure ragi flour; wash and cut fruit just before serving.')
 ];
 const lunches = <Meal>[
   Meal('Varan-bhaat, bhaji and koshimbir','वरण-भात, भाजी आणि कोशिंबीर',['Toor dal','Rice','Seasonal vegetables','Cucumber','Curd'],'Rinse dal and rice; chop vegetables.'),
@@ -41,6 +48,13 @@ const lunches = <Meal>[
   Meal('Matki usal and rice','मटकी उसळ आणि भात',['Matki','Rice','Onion','Tomato','Goda masala'],'Soak matki overnight for sprouting/softening.'),
   Meal('Paneer masala and chapati','पनीर मसाला आणि चपाती',['Paneer','Tomato','Onion','Wheat flour','Curd'],'Chop onion and tomato; knead dough if preferred.'),
   Meal('Vangi bharit and bhakri','वांग्याचे भरीत आणि भाकरी',['Brinjal','Onion','Jowar flour','Coriander','Green chilli'],'Wash brinjal and prepare bhakri flour.'),
+  Meal('Rajma masala and rice','राजमा मसाला आणि भात',['Rajma','Rice','Onion','Tomato','Ginger-garlic'],'Soak rajma overnight; refrigerate after soaking if the room is warm.'),
+  Meal('Chole and chapati','छोले आणि चपाती',['Chickpeas','Onion','Tomato','Wheat flour','Chole masala'],'Soak chickpeas overnight; prepare masala ingredients.'),
+  Meal('Palak paneer and jeera rice','पालक पनीर आणि जिरा भात',['Spinach','Paneer','Rice','Garlic','Cumin'],'Wash spinach thoroughly; cube paneer and rinse rice.'),
+  Meal('Kadhi pakora and rice','कढी पकोडा आणि भात',['Curd','Besan','Onion','Rice','Curry leaves'],'Whisk curd and besan; slice onion and prepare rice.'),
+  Meal('Bharli vangi and bhakri','भरली वांगी आणि भाकरी',['Small brinjal','Peanuts','Sesame seeds','Coconut','Jowar flour'],'Wash and slit brinjals; prepare roasted peanut-sesame filling.'),
+  Meal('Vegetable thali','मिक्स भाजी थाळी',['Seasonal vegetables','Toor dal','Rice','Wheat flour','Curd'],'Wash and chop vegetables; rinse dal and rice.'),
+  Meal('Lemon rice and curd','लिंबू भात आणि दही',['Rice','Lemon','Peanuts','Curry leaves','Curd'],'Cook rice and cool slightly; roast peanuts and prepare tempering.')
   Meal('Chicken curry, rice and salad','चिकन रस्सा, भात आणि कोशिंबीर',['Chicken','Rice','Onion','Tomato','Ginger-garlic','Spices'],'Clean chicken and marinate; refrigerate promptly.'),
   Meal('Egg curry and chapati','अंडा करी आणि चपाती',['Eggs','Onion','Tomato','Wheat flour','Spices'],'Boil eggs; chop onion and tomato.')
 ];
@@ -50,6 +64,13 @@ const dinners = <Meal>[
   Meal('Masale bhaat and raita','मसाले भात आणि रायता',['Rice','Mixed vegetables','Goda masala','Curd','Cucumber'],'Chop vegetables and cucumber.'),
   Meal('Vegetable pulao and raita','भाजी पुलाव आणि रायता',['Rice','Carrot','Beans','Peas','Curd'],'Wash and chop vegetables.'),
   Meal('Dal khichdi and papad','डाळ खिचडी आणि पापड',['Rice','Moong dal','Turmeric','Ghee','Papad'],'Rinse rice and dal.'),
+  Meal('Vegetable stew and appam','भाजी स्ट्यू आणि अप्पम',['Coconut milk','Potato','Carrot','Beans','Appam batter'],'Check appam batter; chop vegetables and keep coconut milk chilled.'),
+  Meal('Methi matar malai and chapati','मेथी मटार मलाई आणि पोळी',['Fenugreek leaves','Peas','Cream','Wheat flour','Onion'],'Wash and chop methi; thaw peas safely in the refrigerator.'),
+  Meal('Lauki chana dal and roti','दुधी चणा डाळ आणि पोळी',['Bottle gourd','Chana dal','Tomato','Wheat flour','Cumin'],'Rinse and soak chana dal; peel and chop bottle gourd.'),
+  Meal('Vegetable dalia','भाजी दलिया',['Broken wheat','Carrot','Beans','Peas','Moong dal'],'Rinse dalia and dal; chop vegetables.'),
+  Meal('Stuffed capsicum and chapati','भरली ढोबळी मिरची आणि पोळी',['Capsicum','Potato','Peanuts','Wheat flour','Coriander'],'Wash capsicums; boil potatoes and prepare peanut filling.'),
+  Meal('Tomato pithla and bhakri','टोमॅटो पिठलं आणि भाकरी',['Besan','Tomato','Garlic','Jowar flour','Coriander'],'Chop tomatoes and garlic; measure besan and jowar flour.'),
+  Meal('Vegetable biryani and raita','व्हेज बिर्याणी आणि रायता',['Basmati rice','Mixed vegetables','Yogurt','Mint','Whole spices'],'Wash and soak rice; chop vegetables and prepare yogurt marinade.')
   Meal('Fish curry and rice','मासे रस्सा आणि भात',['Fish','Rice','Coconut','Onion','Tamarind','Spices'],'Clean fish and refrigerate; prepare curry masala.'),
   Meal('Chicken pulao and salad','चिकन पुलाव आणि कोशिंबीर',['Chicken','Rice','Onion','Yogurt','Whole spices'],'Marinate chicken and refrigerate promptly.')
 ];
@@ -71,8 +92,8 @@ class MenuPlanner {
     final menu = forDate(date);
     final current = slot == 'breakfast' ? menu.breakfast : slot == 'lunch' ? menu.lunch : menu.dinner;
     final pool = slot == 'breakfast' ? breakfasts : slot == 'lunch'
-      ? (menu.strictVeg ? lunches.take(5).toList() : [...lunches, nonVegLunch])
-      : (menu.strictVeg ? dinners.take(5).toList() : [...dinners, nonVegDinner]);
+      ? (menu.strictVeg ? lunches.take(12).toList() : [...lunches, nonVegLunch])
+      : (menu.strictVeg ? dinners.take(12).toList() : [...dinners, nonVegDinner]);
     // Keep one entry per dish, then move forward from the currently selected meal.
     // This avoids duplicate options and cycles through the available pool.
     final uniquePool = <String, Meal>{for (final meal in pool) meal.en: meal}.values.toList();
@@ -97,7 +118,7 @@ class MenuPlanner {
       for (final meal in pool) { if (meal.en == name) return meal; }
       return base;
     }
-    return DayMenu(pick(b, 'breakfast', breakfasts), pick(baseLunch, 'lunch', veg ? lunches.take(5).toList() : [...lunches, nonVegLunch]), pick(baseDinner, 'dinner', veg ? dinners.take(5).toList() : [...dinners, nonVegDinner]), veg);
+    return DayMenu(pick(b, 'breakfast', breakfasts), pick(baseLunch, 'lunch', veg ? lunches.take(12).toList() : [...lunches, nonVegLunch]), pick(baseDinner, 'dinner', veg ? dinners.take(12).toList() : [...dinners, nonVegDinner]), veg);
   }
 }
 class AppStore {
@@ -397,7 +418,7 @@ class _SettingsPageState extends State<SettingsPage> {
       const Divider(),
       ListTile(title:Text(mr?'कुटुंबातील सदस्य':'Household size'),subtitle:const Text('4 people')),
       ListTile(title:Text(mr?'शाकाहारी नियम':'Strict vegetarian days'),subtitle:Text(mr?'सोमवार, गुरुवार, शनिवार':'Monday, Thursday, Saturday — no meat, fish, or eggs')),
-      ListTile(title:Text(mr?'मेनूची माहिती':'Menu data note'),subtitle:Text(mr?'सध्या मर्यादित पाककृतींचा संच तारखेनुसार फिरवला जातो.':'Current menu rotates a starter recipe bank; it is not yet a fully curated unique 365-day menu.')),
+      ListTile(title:Text(mr?'मेनूची माहिती':'Menu data note'),subtitle:Text(mr?'आता अधिक पाककृतींचा संच तारखेनुसार बदलतो. तरीही ३६५ दिवसांचे सर्व १,०९५ जेवण स्लॉट स्वतंत्रपणे तयार केलेले नाहीत.':'The menu now has a larger rotating recipe bank. It is not yet 1,095 individually curated meal slots; more recipes and verified quantities are still being added.')),
       ListTile(title:Text(mr?'ऑफलाइन वापर':'Offline use'),subtitle:Text(mr?'मेनू आणि साहित्य अॅपमध्ये उपलब्ध.':'Menu and ingredients are bundled in the app.'))
     ]);
   }
