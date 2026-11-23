@@ -38,13 +38,13 @@ jobs:
               p = Path('android/app/build.gradle')
           s = p.read_text()
           if p.suffix == '.kts':
-              s = s.replace('compileOptions {', 'compileOptions {\\n        isCoreLibraryDesugaringEnabled = true', 1)
+              s = s.replace('compileOptions {', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true', 1)
               dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
           else:
-              s = s.replace('compileOptions {', 'compileOptions {\\n        coreLibraryDesugaringEnabled true', 1)
+              s = s.replace('compileOptions {', 'compileOptions {\n        coreLibraryDesugaringEnabled true', 1)
               dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
           if 'coreLibraryDesugaring(' not in s and 'coreLibraryDesugaring ' not in s:
-              s = s.replace('dependencies {', 'dependencies {\\n    ' + dep, 1)
+              s = s.replace('dependencies {', 'dependencies {\n    ' + dep, 1)
           p.write_text(s)
           print('Enabled core library desugaring in', p)
           PY
