@@ -8,6 +8,7 @@ on:
       - 'test/**'
       - 'pubspec.yaml'
       - 'ios/**'
+      - 'web/**'
       - '.github/workflows/build-ios.yml'
       - 'README.md'
 
@@ -26,11 +27,11 @@ jobs:
         with:
           channel: stable
           cache: true
-      - name: Generate iOS project files
-        run: flutter create --platforms=ios --org com.prasad.homefood .
+      - name: Generate iOS and web project files
+        run: flutter create --platforms=ios,web --org com.prasad.homefood .
       - name: Install Flutter packages
         run: flutter pub get
-      - name: Remove Flutter template test generated during iOS setup
+      - name: Remove Flutter template test generated during project setup
         run: rm -f test/widget_test.dart
       - name: Analyze Dart code
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
