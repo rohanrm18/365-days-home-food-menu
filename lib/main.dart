@@ -700,6 +700,71 @@ class _PreparationPageState extends State<PreparationPage> {
   }
 }
 
+class MonthlyRatingReport extends StatefulWidget {
+  const MonthlyRatingReport({super.key});
+  @override State<MonthlyRatingReport> createState()=>_MonthlyRatingReportState();
+}
+class _MonthlyRatingReportState extends State<MonthlyRatingReport> {
+  DateTime month=DateTime(DateTime.now().year,DateTime.now().month);
+  @override Widget build(BuildContext context) {
+    final mr=AppStore.marathi;
+    final ratings=AppStore.mealRatings;
+    final totals=<String,List<int>>{};
+    var totalStars=0;
+    var ratedCount=0;
+    for(final entry in ratings.entries) {
+      final parts=entry.key.split(':');
+      if(parts.length!=2) continue;
+      final dateParts=parts[0].split('-');
+      if(dateParts.length!=3) continue;
+      final y=int.tryParse(dateParts[0]),m=int.tryParse(dateParts[1]),d=int.tryParse(dateParts[2]);
+      if(y==null||m==null||d==null||y!=month.year||m!=month.month) continue;
+      final date=DateTime(y,m,d);
+      final menu=MenuPlanner.forDate(date);
+      final meal=parts[1]=='breakfast'?menu.breakfast:parts[1]=='lunch'?menu.lunch:parts[1]=='dinner'?menu.dinner:null;
+      final rating=entry.value;
+      if(meal==null||rating<1||rating>5) continue;
+      totals.putIfAbsent(meal.en,()=>[0,0]);
+      totals[meal.en]![0]+=rating;
+      totals[meal.en]![1]++;
+      totalStars+=rating;
+      ratedCount++;
+    }
+    final ranked=totals.entries.toList()..sort((a,b) {
+      final avgB=b.value[0]/b.value[1],avgA=a.value[0]/a.value[1];
+      final compare=avgB.compareTo(avgA);
+      return compare!=0?compare:b.value[1].compareTo(a.value[1]);
+    });
+    final average=ratedCount==0?0.0:totalStars/ratedCount;
+    final monthLabel=MaterialLocalizations.of(context).formatMonthYear(month);
+    return Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text(mr?'मासिक जेवण रेटिंग अहवाल':'Monthly family food-rating report',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
+      const SizedBox(height:8),
+      Row(children:[
+        IconButton(onPressed:()=>setState(()=>month=DateTime(month.year,month.month-1)),icon:const Icon(Icons.chevron_left)),
+        Expanded(child:Center(child:Text(monthLabel,style:Theme.of(context).textTheme.titleSmall))),
+        IconButton(onPressed:()=>setState(()=>month=DateTime(month.year,month.month+1)),icon:const Icon(Icons.chevron_right)),
+      ]),
+      Row(children:[
+        Expanded(child:Column(children:[Text(ratedCount.toString(),style:Theme.of(context).textTheme.headlineSmall),Text(mr?'रेटिंग':'Ratings')])),
+        Expanded(child:Column(children:[Text(ratedCount==0?'—':average.toStringAsFixed(1)+'/5',style:Theme.of(context).textTheme.headlineSmall),Text(mr?'सरासरी':'Average')])),
+        Expanded(child:Column(children:[Text(ranked.length.toString(),style:Theme.of(context).textTheme.headlineSmall),Text(mr?'पदार्थ':'Dishes')])),
+      ]),
+      const Divider(),
+      if(ranked.isEmpty) Padding(padding:const EdgeInsets.all(12),child:Text(mr?'या महिन्यात अजून रेटिंग नाही. मेनूमधील ताऱ्यांवर टॅप करून रेटिंग द्या.':'No ratings this month yet. Rate meals using the stars on the Menu page.'))
+      else ...[
+        Text(mr?'सर्वाधिक आवडलेले पदार्थ':'Family favourites',style:Theme.of(context).textTheme.titleSmall),
+        for(var i=0;i<ranked.length;i++) ListTile(
+          dense:true,
+          leading:CircleAvatar(radius:14,child:Text((i+1).toString())),
+          title:Text(ranked[i].key),
+          subtitle:Text(ranked[i].value[1].toString()+(mr?' रेटिंग':' ratings')),
+          trailing:Text((ranked[i].value[0]/ranked[i].value[1]).toStringAsFixed(1)+' ★'),
+        )
+      ]
+    ])));
+  }
+}
 class SettingsPage extends StatefulWidget { final VoidCallback onChanged; const SettingsPage({super.key,required this.onChanged}); @override State<SettingsPage> createState()=>_SettingsPageState(); }
 class _SettingsPageState extends State<SettingsPage> {
   bool busy=false;
@@ -710,6 +775,7 @@ class _SettingsPageState extends State<SettingsPage> {
       SwitchListTile(title:Text(mr?'मराठी भाषा':'Marathi language'),subtitle:Text('Marathi / English'),value:mr,onChanged:(v) async {await AppStore.setMarathi(v);widget.onChanged();setState((){});}),
       SwitchListTile(title:Text(mr?'दररोजची तयारी आठवण':'Daily preparation reminder'),subtitle:Text(mr?'संध्याकाळी ७:०० • भारत वेळ':'7:00 PM • India time (Asia/Kolkata)'),value:AppStore.reminders,onChanged:(v) async {await AppStore.setReminders(v);if(v){await ReminderService.refresh();}else{await ReminderService.plugin.cancelAll();}setState((){});}),
       ListTile(leading:const Icon(Icons.alarm),title:Text(mr?'आठवणी पुन्हा सेट करा':'Refresh reminder schedule'),subtitle:Text(mr?'पुढील ३० दिवस':'Rebuild next 30 days'),trailing:busy?const CircularProgressIndicator():const Icon(Icons.refresh),onTap:busy?null:() async {setState(()=>busy=true);await ReminderService.refresh();if(mounted)setState(()=>busy=false);}),
+      const MonthlyRatingReport(),
       const Divider(),
       ListTile(title:Text(mr?'कुटुंबातील सदस्य':'Household size'),subtitle:Text(mr?'${AppStore.householdSize} सदस्य':'${AppStore.householdSize} people'),trailing:DropdownButton<int>(value:AppStore.householdSize,items:List.generate(12,(i)=>DropdownMenuItem<int>(value:i+1,child:Text('${i+1}'))),onChanged:(v) async {if(v==null)return;await AppStore.setHouseholdSize(v);setState((){});widget.onChanged();})),
       ListTile(title:Text(mr?'शाकाहारी नियम':'Strict vegetarian days'),subtitle:Text(mr?'सोमवार, गुरुवार, शनिवार':'Monday, Thursday, Saturday — no meat, fish, or eggs')),
