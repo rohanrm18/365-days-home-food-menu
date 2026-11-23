@@ -10,12 +10,18 @@ on:
       - '.github/workflows/build-ios.yml'
       - 'README.md'
 
+permissions:
+  contents: read
+
 jobs:
   build-ios:
-    runs-on: macos-14
+    runs-on: macos-latest
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: subosito/flutter-action@v2
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: stable
           cache: true
