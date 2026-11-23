@@ -477,7 +477,20 @@ String groceryEstimate(String item, int uses, [int people = 4]) {
     'Roasted gram':'100 g', 'Cumin':'2 tsp', 'Garlic':'1 bulb',
     'Goda masala':'2 tbsp', 'Ginger-garlic':'2 tbsp', 'Spices':'as needed',
     'Ghee':'2 tbsp', 'Papad':'4 pieces', 'Tamarind':'small lemon-sized piece',
-    'Yogurt':'150 g', 'Whole spices':'2 tbsp'
+    'Yogurt':'150 g', 'Whole spices':'2 tbsp',
+    'Almonds':'50 g', 'Appam batter':'500 g', 'Baking powder':'1 tsp',
+    'Banana':'4 medium', 'Basmati rice':'400 g', 'Bottle gourd':'500 g',
+    'Bread':'8 slices', 'Broken wheat':'250 g', 'Butter':'2 tbsp',
+    'Capsicum':'4 medium', 'Cardamom':'4 pods', 'Chana dal':'250 g',
+    'Chickpeas':'300 g', 'Chole masala':'2 tbsp', 'Coconut milk':'200 ml',
+    'Cream':'100 ml', 'Dates':'100 g', 'Fenugreek leaves':'1 bunch',
+    'Ginger':'25 g', 'Jaggery':'100 g', 'Milk':'500 ml', 'Mint':'1 small bunch',
+    'Mixed dry fruits':'100 g', 'Nutmeg':'1/4 tsp', 'Pav':'4 pieces',
+    'Pearl millet':'250 g', 'Pepper':'1 tsp', 'Poppy seeds':'2 tbsp',
+    'Ragi flour':'200 g', 'Rajma':'250 g', 'Rice flour':'300 g',
+    'Saffron':'a small pinch', 'Sesame seeds':'50 g', 'Small brinjal':'6 pieces',
+    'Spinach':'1 bunch', 'Sugar':'100 g', 'Turmeric':'1 tsp',
+    'Vermicelli':'100 g'
   };
   final base = estimates[item] ?? 'small quantity; adjust to taste';
   final match = RegExp(r'^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))?\s*(.*)$').firstMatch(base);
