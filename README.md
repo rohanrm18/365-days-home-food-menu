@@ -1,67 +1,50 @@
 # 365 Days Home Food Menu App
 
-A family meal-planning app focused on Maharashtrian and Indian home cooking. The goal is to make everyday meal planning, advance preparation, and grocery shopping easier for a household of four.
+A Flutter starter application for Maharashtrian and Indian family meal planning, designed for a household of four.
 
-## Project status
+## Current implementation
 
-**Repository setup:** Created  
-**README:** Enabled  
-**Application source:** Not yet uploaded to this repository  
-**Build status:** No Android APK or iOS build has been produced or device-tested yet.
+- Flutter application source is in `lib/main.dart`.
+- Date-based daily breakfast, lunch and dinner screens.
+- Recipe and ingredient reference list.
+- Shopping checklist with saved checked items.
+- Marathi / English interface toggle.
+- Favourites.
+- Strict vegetarian rule on **Monday, Thursday and Saturday** (no meat, fish or eggs in those day menus).
+- Daily 7:00 PM Asia/Kolkata next-day preparation reminders, queued for the next 30 days.
+- Android GitHub Actions workflow builds a release APK and uploads it as a workflow artifact.
 
-This repository is the project home. Features below describe the agreed product requirements; they should not be interpreted as already implemented until the corresponding source code and tests are committed.
+## Important menu limitation
 
-## Planned features
+The current app uses a small starter recipe bank rotated across dates. It is **not yet a fully curated, 365-day unique menu**. Recipe instructions and ingredient quantities are also starter guidance and need a complete editorial pass before relying on them as a household meal schedule. This is stated in the app's Settings screen as well.
 
-- 365-day meal calendar with breakfast, lunch, and dinner (1,095 meal slots).
-- Maharashtrian and wider Indian home-food options.
-- Marathi and English language support.
-- Vegetarian and non-vegetarian choices on eligible days.
-- **Strict vegetarian days: Monday, Thursday, and Saturday** — no meat, fish, or eggs.
-- Recipes with ingredients, quantities sized for four people, and cooking instructions.
-- Grocery list with controls to mark items as already available or to buy.
-- Favourites and meal replacement.
-- Weekly and monthly calendar views.
-- Festival and family-friendly menu suggestions.
-- Offline access to saved menu and recipe data.
-- Simple household-friendly interface for Android and iPhone.
+## Reminder behavior
 
-## Advance preparation reminder
+The app schedules reminders for 7:00 PM India time and includes the next day's meals, ingredients, and advance-preparation notes. Android/iOS notification permissions must be granted. Android uses inexact scheduling to avoid requiring exact-alarm access. The app currently queues 30 days and refreshes that queue when opened; users should open the app periodically. Notification display length can be limited by the operating system.
 
-The planned daily reminder is **7:00 PM India time (Asia/Kolkata)** and should preview the following day's:
+## Build Android APK
 
-- Breakfast, lunch, and dinner.
-- Ingredients and estimated quantities for four people.
-- Vegetables and any required non-vegetarian items.
-- Advance tasks such as soaking, cleaning, marinating, and safe thawing.
+1. Open the **Actions** tab in this private repository.
+2. Select **Build Android APK**.
+3. Run the workflow manually with **Run workflow**, or push a change to `main`.
+4. When the run succeeds, open the run and download the artifact named `365-days-home-food-menu-android`.
+5. Extract the artifact ZIP to get `app-release.apk` and install it on an Android device.
 
-The app should allow reminders to be enabled or disabled in settings. Notification delivery must be verified on real Android and iOS devices; operating-system permissions and battery settings can affect delivery.
+The workflow runs `flutter analyze`, `flutter test`, and `flutter build apk --release` before publishing the artifact.
 
-## Technology direction
+## Technology
 
-- **Flutter / Dart** for a shared Android and iOS application.
-- Local storage for offline access.
-- Local notifications for preparation reminders.
+- Flutter / Dart
+- `shared_preferences` for local preferences and grocery checklist state
+- `flutter_local_notifications` and `timezone` for local reminders
+- No paid API or cloud service is required for the current app.
 
-The final package choices and platform configuration will be documented after the application source is added and builds are verified.
+## Platform status
 
-## Development plan
+- **Android:** automated APK workflow is configured; check the latest Actions run for its verified result.
+- **iPhone:** source is Flutter-compatible, but an iOS build has not been generated or tested. iOS compilation/signing requires macOS and Apple tooling.
+- **Device testing:** notification timing, offline behavior, and screen layouts still need real-device verification.
 
-1. Add the Flutter application scaffold and source.
-2. Build the meal calendar, bilingual interface, recipes, and grocery list.
-3. Add and validate the 7:00 PM next-day reminder flow.
-4. Expand the menu into a genuinely curated 365-day plan.
-5. Run automated checks and build the Android app.
-6. Verify notifications, offline behavior, and usability on devices.
-7. Configure and test the iOS build on macOS with the required Apple signing setup.
+## Food safety
 
-## Important notes
-
-- The menu must not schedule eggs, meat, or fish on Monday, Thursday, or Saturday.
-- Ingredient quantities are planning estimates, not medical or nutrition advice.
-- Handle raw meat and fish safely; keep them refrigerated and thaw in the refrigerator.
-- Do not mark a feature as complete until its implementation and relevant tests have been checked.
-
-## Contributing
-
-Development is currently managed in the project repository. When source code is added, include clear setup, test, and build instructions here.
+Keep raw meat and fish refrigerated promptly and thaw safely in the refrigerator. Ingredient lists are planning suggestions, not medical or nutrition advice. Adjust quantities and recipes to the household's needs.
