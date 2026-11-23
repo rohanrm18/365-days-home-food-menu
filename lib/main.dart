@@ -100,7 +100,9 @@ class ReminderService {
       final date = DateTime(now.year,now.month,now.day).add(Duration(days:i));
       final menu = MenuPlanner.forDate(date);
       final lines = menu.meals.map((m) => m.en + ': ' + m.ingredients.join(', ') + '. Prep: ' + m.prep).join('\n');
-      final when = tz.TZDateTime(tz.local,date.year,date.month,date.day,19);
+      final reminderDate = date.subtract(const Duration(days:1));
+      final when = tz.TZDateTime(tz.local,reminderDate.year,reminderDate.month,reminderDate.day,19);
+      if (!when.isAfter(now)) { continue; }
       await plugin.zonedSchedule(7100+i,'Tomorrow meal preparation • ' + date.day.toString() + '/' + date.month.toString(),
         (menu.strictVeg ? 'Strict vegetarian day\n' : 'Veg / non-veg options\n') + lines,when,
         const NotificationDetails(android:AndroidNotificationDetails('meal_prep','Meal preparation reminders',channelDescription:'Next-day meal ingredients and preparation tasks',importance:Importance.high,priority:Priority.high),iOS:DarwinNotificationDetails()),
