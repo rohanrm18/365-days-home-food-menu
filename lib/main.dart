@@ -188,7 +188,8 @@ class HomePage extends StatelessWidget {
       MealCard(title:mr?'नाश्ता':'Breakfast',meal:menu.breakfast,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'breakfast'); onChanged(); }),
       MealCard(title:mr?'दुपारचे जेवण':'Lunch',meal:menu.lunch,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'lunch'); onChanged(); }),
       MealCard(title:mr?'रात्रीचे जेवण':'Dinner',meal:menu.dinner,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'dinner'); onChanged(); }),
-      Card(color:Theme.of(context).colorScheme.secondaryContainer,child:ListTile(leading:const Icon(Icons.notifications_active),title:Text(mr?'उद्याच्या तयारीची आठवण':'Tomorrow preparation reminder'),subtitle:Text(mr?'संध्याकाळी ७:०० वाजता':'Daily at 7:00 PM India time')))
+      Card(color:Theme.of(context).colorScheme.secondaryContainer,child:ListTile(leading:const Icon(Icons.notifications_active),title:Text(mr?'उद्याच्या तयारीची आठवण':'Tomorrow preparation reminder'),subtitle:Text(mr?'संध्याकाळी ७:०० वाजता':'Daily at 7:00 PM India time'))),
+      const FestivalMenuCard()
     ]);
   }
 }
@@ -255,6 +256,74 @@ List<String> recipeSteps(Meal meal, bool marathi) =>
     (marathi ? _stepsMr[meal.en] : _stepsEn[meal.en]) ??
     (marathi ? ['सर्व साहित्य स्वच्छ करून मोजून घ्या.','कांदा व मसाले परतून मुख्य साहित्य घाला.','आवश्यकतेनुसार पाणी घालून पूर्ण शिजवा.','मीठ व मसाले चवीनुसार समायोजित करा.','गरम वाढा.'] :
     ['Wash and measure all ingredients.','Sauté onion and spices, then add the main ingredients.','Add water as needed and cook until fully done.','Adjust salt and seasoning to taste.','Serve hot.']);
+
+class FestivalMenu {
+  final String en, mr, noteEn, noteMr;
+  final List<Meal> meals;
+  const FestivalMenu(this.en,this.mr,this.noteEn,this.noteMr,this.meals);
+}
+const festivalMenus = <FestivalMenu>[
+  FestivalMenu('Ganesh Chaturthi','गणेश चतुर्थी','Traditional vegetarian festive meal','पारंपरिक शाकाहारी सणाचा बेत',[
+    Meal('Ukadiche modak','उकडीचे मोदक',['Rice flour','Coconut','Jaggery','Cardamom','Ghee'],'Prepare coconut-jaggery filling; keep covered and make fresh dough before shaping.'),
+    Meal('Puran poli and katachi amti','पुरणपोळी आणि कटाची आमटी',['Chana dal','Jaggery','Wheat flour','Cardamom','Nutmeg'],'Cook chana dal and prepare puran; knead dough and rest it.'),
+    Meal('Batata bhaji and varan-bhaat','बटाटा भाजी आणि वरण-भात',['Potato','Rice','Toor dal','Cumin','Coriander'],'Wash rice and dal; boil potatoes and keep spices ready.')
+  ]),
+  FestivalMenu('Diwali','दिवाळी','Festive vegetarian lunch and sweets','सणाचा शाकाहारी बेत आणि गोड पदार्थ',[
+    Meal('Karanji','करंजी',['Wheat flour','Coconut','Jaggery','Poppy seeds','Ghee'],'Prepare and cool the filling; knead dough and rest before shaping.'),
+    Meal('Masale bhaat and batata bhaji','मसाले भात आणि बटाटा भाजी',['Rice','Mixed vegetables','Goda masala','Potato','Peanuts'],'Chop vegetables and potatoes; measure rice and spices.'),
+    Meal('Shrikhand and puri','श्रीखंड आणि पुरी',['Curd','Sugar','Cardamom','Wheat flour','Ghee'],'Hang curd in the refrigerator to drain; chill before serving.')
+  ]),
+  FestivalMenu('Gudi Padwa','गुढीपाडवा','Maharashtrian new-year vegetarian meal','मराठी नववर्षाचा शाकाहारी बेत',[
+    Meal('Shrikhand','श्रीखंड',['Curd','Sugar','Cardamom','Saffron'],'Hang curd in the refrigerator; mix with sugar and flavourings.'),
+    Meal('Puran poli and amti','पुरणपोळी आणि आमटी',['Chana dal','Jaggery','Wheat flour','Cumin','Goda masala'],'Cook dal and prepare puran; knead and rest the dough.'),
+    Meal('Batata bhaji, rice and koshimbir','बटाटा भाजी, भात आणि कोशिंबीर',['Potato','Rice','Cucumber','Curd','Coriander'],'Boil potatoes; wash rice and chop cucumber.')
+  ]),
+  FestivalMenu('Makar Sankranti','मकर संक्रांत','Til-gul themed vegetarian menu','तिळगुळाचा शाकाहारी सणाचा बेत',[
+    Meal('Tilgul ladoo','तिळगुळाचे लाडू',['Sesame seeds','Jaggery','Peanuts','Cardamom'],'Roast sesame and peanuts; keep a greased plate ready before making the jaggery syrup.'),
+    Meal('Bajra khichdi and kadhi','बाजरीची खिचडी आणि कढी',['Pearl millet','Moong dal','Curd','Besan','Cumin'],'Wash millet and dal; soak if needed and whisk kadhi mixture.'),
+    Meal('Bhogichi bhaji and bhakri','भोगीची भाजी आणि भाकरी',['Seasonal vegetables','Peanuts','Sesame seeds','Jowar flour','Coconut'],'Wash and chop mixed vegetables; measure spices and flour.')
+  ]),
+  FestivalMenu('Holi','होळी','Colourful vegetarian festive meal','रंगांचा शाकाहारी सणाचा बेत',[
+    Meal('Puran poli','पुरणपोळी',['Chana dal','Jaggery','Wheat flour','Cardamom'],'Cook dal until soft; prepare puran and rest the dough.'),
+    Meal('Kadhi and steamed rice','कढी आणि वाफवलेला भात',['Curd','Besan','Rice','Cumin','Curry leaves'],'Whisk curd and besan smoothly; wash and soak rice briefly.'),
+    Meal('Aloo sabzi and salad','बटाट्याची भाजी आणि कोशिंबीर',['Potato','Tomato','Cucumber','Coriander','Spices'],'Boil potatoes and chop salad vegetables.')
+  ]),
+  FestivalMenu('Eid','ईद','Festive menu with vegetarian options','शाकाहारी पर्यायांसह सणाचा बेत',[
+    Meal('Sheer khurma (vegetarian)','शीर खुरमा (शाकाहारी)',['Milk','Vermicelli','Dates','Almonds','Cardamom'],'Chop nuts and dates; roast vermicelli lightly before cooking.'),
+    Meal('Vegetable pulao','भाजी पुलाव',['Rice','Carrot','Beans','Peas','Whole spices'],'Wash and soak rice; chop vegetables and prepare whole spices.'),
+    Meal('Paneer curry and chapati','पनीर करी आणि चपाती',['Paneer','Tomato','Onion','Wheat flour','Spices'],'Chop onion and tomato; knead chapati dough.')
+  ]),
+  FestivalMenu('Christmas','नाताळ','Family-friendly vegetarian festive menu','कुटुंबासाठी शाकाहारी सणाचा बेत',[
+    Meal('Eggless fruit cake','अंडेविरहित फ्रूट केक',['Wheat flour','Mixed dry fruits','Sugar','Curd','Baking powder'],'Chop and soak dry fruits; preheat oven before baking.'),
+    Meal('Vegetable pulao and raita','भाजी पुलाव आणि रायता',['Rice','Mixed vegetables','Curd','Cucumber','Whole spices'],'Wash rice, chop vegetables and prepare raita ingredients.'),
+    Meal('Tomato soup and paneer sandwich','टोमॅटो सूप आणि पनीर सँडविच',['Tomato','Paneer','Bread','Butter','Pepper'],'Wash tomatoes; crumble paneer and prepare sandwich filling.')
+  ])
+];
+
+class FestivalMenuCard extends StatelessWidget {
+  const FestivalMenuCard({super.key});
+  @override Widget build(BuildContext context) {
+    final mr=AppStore.marathi;
+    return Card(child:ExpansionTile(
+      leading:const Icon(Icons.celebration),
+      title:Text(mr?'सण आणि खास दिवसांचे मेनू':'Festival and special-day menus'),
+      subtitle:Text(mr?'७ सणांसाठी खास शाकाहारी मेनू':'Seven curated vegetarian celebration menus'),
+      children:[
+        for(final festival in festivalMenus) ExpansionTile(
+          title:Text(mr?festival.mr:festival.en),
+          subtitle:Text(mr?festival.noteMr:festival.noteEn),
+          children:[
+            for(var i=0;i<festival.meals.length;i++) ListTile(
+              title:Text((mr?['नाश्ता','दुपारचे जेवण','रात्रीचे जेवण'][i]:['Breakfast','Lunch','Dinner'][i])+' • '+festival.meals[i].name(mr)),
+              subtitle:Text((mr?'साहित्य: ':'Ingredients: ')+festival.meals[i].ingredients.join(', ')+'\\n'+(mr?'आधीची तयारी: ':'Advance prep: ')+festival.meals[i].prep),
+              isThreeLine:true
+            )
+          ]
+        )
+      ]
+    ));
+  }
+}
 
 class RecipesPage extends StatelessWidget {
   const RecipesPage({super.key});
