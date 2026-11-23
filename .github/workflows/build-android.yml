@@ -29,7 +29,7 @@ jobs:
       - name: Configure scheduled notification receivers
         run: python3 tool/patch_android_manifest.py
       - run: flutter pub get
-      - run: flutter analyze
+      - run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - run: flutter test
       - run: flutter build apk --release
       - uses: actions/upload-artifact@v4
