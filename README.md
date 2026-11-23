@@ -1,6 +1,6 @@
 # 365 Days Home Food Menu App
 
-A Flutter starter application for Maharashtrian and Indian family meal planning, designed for a household of four.
+An iPhone-first Flutter application for Maharashtrian and Indian family meal planning, designed for a household of four.
 
 ## Current implementation
 
@@ -12,7 +12,7 @@ A Flutter starter application for Maharashtrian and Indian family meal planning,
 - Favourites.
 - Strict vegetarian rule on **Monday, Thursday and Saturday** (no meat, fish or eggs in those day menus).
 - Daily 7:00 PM Asia/Kolkata next-day preparation reminders, queued for the next 30 days.
-- Android GitHub Actions workflow builds a release APK and uploads it as a workflow artifact.
+- macOS GitHub Actions workflow validates the iOS release build and uploads an unsigned `.app` bundle for inspection.
 
 ## Important menu limitation
 
@@ -22,15 +22,14 @@ The current app uses a small starter recipe bank rotated across dates. It is **n
 
 The app schedules reminders for 7:00 PM India time and includes the next day's meals, ingredients, and advance-preparation notes. Android/iOS notification permissions must be granted. Android uses inexact scheduling to avoid requiring exact-alarm access. The app currently queues 30 days and refreshes that queue when opened; users should open the app periodically. Notification display length can be limited by the operating system.
 
-## Build Android APK
+## Build for iPhone
 
 1. Open the **Actions** tab in this private repository.
-2. Select **Build Android APK**.
-3. Run the workflow manually with **Run workflow**, or push a change to `main`.
-4. When the run succeeds, open the run and download the artifact named `365-days-home-food-menu-android`.
-5. Extract the artifact ZIP to get `app-release.apk` and install it on an Android device.
+2. Select **Build iPhone app**.
+3. Run the workflow manually with **Run workflow**, or push a change to the iOS workflow's watched paths.
+4. When the run succeeds, download the artifact named `365-days-home-food-iphone-unsigned`.
 
-The workflow runs `flutter analyze`, `flutter test`, and `flutter build apk --release` before publishing the artifact.
+The workflow runs Flutter analysis and tests, then compiles an unsigned iOS release app on a macOS runner. An unsigned app is for build verification only; it cannot be installed directly on family iPhones. Installation and TestFlight distribution require Apple code signing, provisioning, and an Apple Developer account.
 
 ## Technology
 
