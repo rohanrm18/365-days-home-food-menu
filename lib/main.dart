@@ -136,6 +136,8 @@ class AppStore {
   static Future<void> init() async { prefs = await SharedPreferences.getInstance(); MenuPlanner.loadOverrides(prefs.getString('meal_overrides')); }
   static bool get marathi => prefs.getBool('marathi') ?? false;
   static bool get reminders => prefs.getBool('reminders') ?? true;
+  static int get householdSize => prefs.getInt('household_size') ?? 4;
+  static Future<void> setHouseholdSize(int v) async { await prefs.setInt('household_size', v.clamp(1, 12)); }
   static Future<void> setMarathi(bool v) async { await prefs.setBool('marathi',v); }
   static Future<void> setReminders(bool v) async { await prefs.setBool('reminders',v); }
   static Set<String> get checkedGroceries => (prefs.getStringList('checked_groceries') ?? []).toSet();
@@ -457,7 +459,7 @@ class RecipesPage extends StatelessWidget {
     ]);
   }
 }
-String groceryEstimate(String item, int uses) {
+String groceryEstimate(String item, int uses, int people) {
   const estimates = <String, String>{
     'Poha':'300 g', 'Rava':'250 g', 'Bhajani flour':'300 g', 'Idli batter':'500 g',
     'Sabudana':'300 g', 'Besan':'250 g', 'Dosa batter':'500 g',
@@ -476,30 +478,30 @@ String groceryEstimate(String item, int uses) {
     'Yogurt':'150 g', 'Whole spices':'2 tbsp'
   };
   final base = estimates[item] ?? 'small quantity; adjust to taste';
-  if (uses <= 1) return base;
-  final match = RegExp(r'^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))?\s*(.*)$').firstMatch(base);
-  if (match == null) return base + ' (used in ' + uses.toString() + ' meals; adjust total)';
-  final low = double.parse(match.group(1)!) * uses;
+  final match = RegExp(r'^(\\d+(?:\\.\\d+)?)(?:–(\\d+(?:\\.\\d+)?))?\\s*(.*)$').firstMatch(base);
+  if (match == null) return base + ' (adjust to taste)';
+  final factor = uses * people / 4.0;
+  final low = double.parse(match.group(1)!) * factor;
   final highText = match.group(2);
   final unit = match.group(3) ?? '';
   String fmt(double n) => n == n.roundToDouble() ? n.toInt().toString() : n.toStringAsFixed(1);
-  final amount = highText == null ? fmt(low) : fmt(low) + '–' + fmt(double.parse(highText) * uses);
-  return amount + ' ' + unit + ' (combined for ' + uses.toString() + ' meals)';
+  final amount = highText == null ? fmt(low) : fmt(low) + '–' + fmt(double.parse(highText) * factor);
+  return amount + ' ' + unit + (uses > 1 ? ' (combined for ' + uses.toString() + ' meals)' : '');
 }
 class GroceryPage extends StatefulWidget { final DateTime date; const GroceryPage({super.key,required this.date}); @override State<GroceryPage> createState()=>_GroceryPageState(); }
 class _GroceryPageState extends State<GroceryPage> {
   @override Widget build(BuildContext context) {
-    final mr=AppStore.marathi; final menu=MenuPlanner.forDate(widget.date); final uses=<String,int>{}; for(final meal in menu.meals){for(final ingredient in meal.ingredients){uses.update(ingredient,(n)=>n+1,ifAbsent:()=>1);}} final items=uses.keys.toList()..sort(); final checked=AppStore.checkedGroceries;
+    final mr=AppStore.marathi; final people=AppStore.householdSize; final menu=MenuPlanner.forDate(widget.date); final uses=<String,int>{}; for(final meal in menu.meals){for(final ingredient in meal.ingredients){uses.update(ingredient,(n)=>n+1,ifAbsent:()=>1);}} final items=uses.keys.toList()..sort(); final checked=AppStore.checkedGroceries;
     return ListView(padding:const EdgeInsets.all(16),children:[
       Text(mr?'खरेदी यादी':'Shopping list',style:Theme.of(context).textTheme.titleLarge),
       Text(widget.date.day.toString()+'/'+widget.date.month.toString()+'/'+widget.date.year.toString()+' • '+items.length.toString()+' '+(mr?'वस्तू':'items')),
-      Padding(padding:const EdgeInsets.only(top:6,bottom:6),child:Text(mr?'४ जणांसाठी अंदाजे प्रमाण • प्रत्यक्ष भूक आणि पाककृतीनुसार बदलू शकते.':'Estimated quantities for 4 people • adjust for appetite and your recipe.',style:Theme.of(context).textTheme.bodySmall)),
+      Padding(padding:const EdgeInsets.only(top:6,bottom:6),child:Text(mr?'${people} जणांसाठी अंदाजे प्रमाण • प्रत्यक्ष भूक आणि पाककृतीनुसार बदलू शकते.':'Estimated quantities for ${people} people • scaled from a 4-person base; adjust for appetite and recipe.',style:Theme.of(context).textTheme.bodySmall)),
       const SizedBox(height:8),
       Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[const Icon(Icons.inventory_2_outlined),const SizedBox(width:8),Expanded(child:Text(mr?'घरी उपलब्ध':'Already at home',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),Text('${items.where((x)=>checked.contains(x)).length}')]),
         const SizedBox(height:6),
         if(items.where((x)=>checked.contains(x)).isEmpty) Text(mr?'अजून कोणतीही वस्तू उपलब्ध म्हणून चिन्हांकित नाही.':'No items marked as available yet.'),
-        for(final item in items.where((x)=>checked.contains(x))) CheckboxListTile(dense:true,value:true,title:Text(item),subtitle:Text(groceryEstimate(item, uses[item] ?? 1)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.remove(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
+        for(final item in items.where((x)=>checked.contains(x))) CheckboxListTile(dense:true,value:true,title:Text(item),subtitle:Text(groceryEstimate(item, uses[item] ?? 1, people)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.remove(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
       ]))),
       Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[const Icon(Icons.shopping_cart_outlined),const SizedBox(width:8),Expanded(child:Text(mr?'खरेदी करायचे':'Need to buy',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),Text('${items.where((x)=>!checked.contains(x)).length}')]),
@@ -522,7 +524,7 @@ class _SettingsPageState extends State<SettingsPage> {
       SwitchListTile(title:Text(mr?'दररोजची तयारी आठवण':'Daily preparation reminder'),subtitle:Text(mr?'संध्याकाळी ७:०० • भारत वेळ':'7:00 PM • India time (Asia/Kolkata)'),value:AppStore.reminders,onChanged:(v) async {await AppStore.setReminders(v);if(v){await ReminderService.refresh();}else{await ReminderService.plugin.cancelAll();}setState((){});}),
       ListTile(leading:const Icon(Icons.alarm),title:Text(mr?'आठवणी पुन्हा सेट करा':'Refresh reminder schedule'),subtitle:Text(mr?'पुढील ३० दिवस':'Rebuild next 30 days'),trailing:busy?const CircularProgressIndicator():const Icon(Icons.refresh),onTap:busy?null:() async {setState(()=>busy=true);await ReminderService.refresh();if(mounted)setState(()=>busy=false);}),
       const Divider(),
-      ListTile(title:Text(mr?'कुटुंबातील सदस्य':'Household size'),subtitle:const Text('4 people')),
+      ListTile(title:Text(mr?'कुटुंबातील सदस्य':'Household size'),subtitle:Text(mr?'${AppStore.householdSize} सदस्य':'${AppStore.householdSize} people'),trailing:DropdownButton<int>(value:AppStore.householdSize,items:List.generate(12,(i)=>DropdownMenuItem<int>(value:i+1,child:Text('${i+1}'))),onChanged:(v) async {if(v==null)return;await AppStore.setHouseholdSize(v);setState((){});widget.onChanged();})),
       ListTile(title:Text(mr?'शाकाहारी नियम':'Strict vegetarian days'),subtitle:Text(mr?'सोमवार, गुरुवार, शनिवार':'Monday, Thursday, Saturday — no meat, fish, or eggs')),
       ListTile(title:Text(mr?'मेनूची माहिती':'Menu data note'),subtitle:Text(mr?'आता अधिक पाककृतींचा संच तारखेनुसार बदलतो. तरीही ३६५ दिवसांचे सर्व १,०९५ जेवण स्लॉट स्वतंत्रपणे तयार केलेले नाहीत.':'The menu now has a larger rotating recipe bank. It is not yet 1,095 individually curated meal slots; more recipes and verified quantities are still being added.')),
       ListTile(title:Text(mr?'ऑफलाइन वापर':'Offline use'),subtitle:Text(mr?'मेनू आणि साहित्य अॅपमध्ये उपलब्ध.':'Menu and ingredients are bundled in the app.'))
