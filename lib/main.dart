@@ -197,9 +197,28 @@ class HomePage extends StatelessWidget {
   const HomePage({super.key,required this.date,required this.onDate,required this.onChanged});
   @override Widget build(BuildContext context) {
     final mr=AppStore.marathi; final menu=MenuPlanner.forDate(date);
+    final prepKeys=List.generate(3,(i)=>'prep:${date.year}-${date.month}-${date.day}:$i');
+    final prepDone=prepKeys.where((k)=>AppStore.checkedGroceries.contains(k)).length;
+    final dateLabel=date.day.toString()+'/'+date.month.toString()+'/'+date.year.toString();
     return ListView(padding:const EdgeInsets.all(16),children:[
       Text(mr?'तुमच्या कुटुंबाचा रोजचा आहार':'Your family daily meal plan',style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:10),
+      Card(color:Theme.of(context).colorScheme.primaryContainer,child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[const Icon(Icons.wb_sunny_outlined),const SizedBox(width:8),Expanded(child:Text(mr?'आजचा कौटुंबिक डॅशबोर्ड':'Your daily family dashboard',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),Text(dateLabel,style:Theme.of(context).textTheme.labelMedium)]),
+        const SizedBox(height:10),
+        Text(mr?'आजचे तीन जेवण':'Today’s three meals',style:Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height:4),
+        Text((mr?'नाश्ता: ':'Breakfast: ')+menu.breakfast.name(mr)),
+        Text((mr?'दुपारचे: ':'Lunch: ')+menu.lunch.name(mr)),
+        Text((mr?'रात्रीचे: ':'Dinner: ')+menu.dinner.name(mr)),
+        const SizedBox(height:12),
+        Row(children:[Expanded(child:Text(mr?'तयारीची प्रगती':'Preparation progress',style:Theme.of(context).textTheme.labelLarge)),Text('${prepDone}/3')]),
+        const SizedBox(height:5),
+        LinearProgressIndicator(value:prepDone/3),
+        const SizedBox(height:10),
+        Row(children:[const Icon(Icons.notifications_active_outlined,size:18),const SizedBox(width:6),Expanded(child:Text(mr?'उद्याच्या जेवणाची तयारी — संध्याकाळी ७:००':'Tomorrow’s meal-prep reminder — 7:00 PM'))])
+      ]))),
+      const SizedBox(height:4),
       Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Text(mr?'आठवड्याचा मेनू':'Weekly menu',style:Theme.of(context).textTheme.titleMedium),
         const SizedBox(height:8),
