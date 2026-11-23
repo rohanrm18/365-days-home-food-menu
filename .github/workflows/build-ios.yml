@@ -1,0 +1,41 @@
+name: Build iPhone app
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'ios/**'
+      - '.github/workflows/build-ios.yml'
+      - 'README.md'
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate iOS project files
+        run: flutter create --platforms=ios --org com.prasad.homefood .
+      - name: Install Flutter packages
+        run: flutter pub get
+      - name: Analyze Dart code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run tests
+        run: flutter test
+      - name: Build iOS release app (unsigned)
+        run: flutter build ios --release --no-codesign
+      - name: Package unsigned iOS app for inspection
+        run: |
+          cd build/ios/iphoneos
+          zip -r ../../../../365-days-home-food-iphone-unsigned.zip Runner.app
+      - name: Upload unsigned iOS app
+        uses: actions/upload-artifact@v4
+        with:
+          name: 365-days-home-food-iphone-unsigned
+          path: 365-days-home-food-iphone-unsigned.zip
+          retention-days: 14
