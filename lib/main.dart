@@ -505,6 +505,7 @@ class RecipesPage extends StatefulWidget {
 }
 class _RecipesPageState extends State<RecipesPage> {
   bool favouritesOnly = false;
+  bool topRatedOnly = false;
   String selectedCategory = 'All';
   final TextEditingController searchController = TextEditingController();
   @override void dispose() { searchController.dispose(); super.dispose(); }
@@ -512,6 +513,24 @@ class _RecipesPageState extends State<RecipesPage> {
     final mr=AppStore.marathi;
     final query=searchController.text.trim().toLowerCase();
     final all=[...breakfasts,...lunches,...dinners,...snacks].toSet().toList();
+    final ratingTotals=<String,List<int>>{};
+    for(final entry in AppStore.mealRatings.entries) {
+      final parts=entry.key.split(':');
+      if(parts.length!=2) continue;
+      final p=parts[0].split('-');
+      if(p.length!=3) continue;
+      final y=int.tryParse(p[0]),m=int.tryParse(p[1]),d=int.tryParse(p[2]);
+      if(y==null||m==null||d==null) continue;
+      final menu=MenuPlanner.forDate(DateTime(y,m,d));
+      final meal=parts[1]=='breakfast'?menu.breakfast:parts[1]=='lunch'?menu.lunch:parts[1]=='dinner'?menu.dinner:null;
+      if(meal==null||entry.value<1||entry.value>5) continue;
+      ratingTotals.putIfAbsent(meal.en,()=>[0,0]);
+      ratingTotals[meal.en]![0]+=entry.value;
+      ratingTotals[meal.en]![1]++;
+    }
+    final ratedAverage=<String,double>{
+      for(final entry in ratingTotals.entries) entry.key:entry.value[0]/entry.value[1]
+    };
     final visible=all.where((meal) {
       final favouriteMatch=!favouritesOnly||AppStore.favourites.contains(meal.en);
       final searchMatch=query.isEmpty||meal.en.toLowerCase().contains(query)||meal.mr.toLowerCase().contains(query)||meal.ingredients.any((item)=>item.toLowerCase().contains(query));
@@ -520,8 +539,10 @@ class _RecipesPageState extends State<RecipesPage> {
         (selectedCategory=='Lunch'&&lunches.contains(meal))||
         (selectedCategory=='Dinner'&&dinners.contains(meal))||
         (selectedCategory=='Snacks'&&snacks.contains(meal));
-      return favouriteMatch&&searchMatch&&categoryMatch;
+      final ratingMatch=!topRatedOnly||(ratedAverage[meal.en]??0)>=4;
+      return favouriteMatch&&searchMatch&&categoryMatch&&ratingMatch;
     }).toList();
+    if(topRatedOnly) visible.sort((a,b)=>(ratedAverage[b.en]??0).compareTo(ratedAverage[a.en]??0));
     final categories=<String>['All','Breakfast','Lunch','Dinner','Snacks'];
     final categoryMr=<String,String>{'All':'सर्व','Breakfast':'नाश्ता','Lunch':'दुपारचे जेवण','Dinner':'रात्रीचे जेवण','Snacks':'खाऊ'};
     return ListView(padding:const EdgeInsets.all(12),children:[
@@ -546,16 +567,17 @@ class _RecipesPageState extends State<RecipesPage> {
         ),
       ]),
       const SizedBox(height:6),
-      Wrap(spacing:8,children:[
+      Wrap(spacing:8,runSpacing:6,children:[
         ChoiceChip(label:Text(mr?'सर्व पाककृती':'All recipes'),selected:!favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=false)),
-        ChoiceChip(label:Text(mr?'आवडत्या पाककृती':'Favourites'),selected:favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=true)),
+        ChoiceChip(label:Text(mr?'माझी आवडती':'My favourites'),selected:favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=true)),
+        ChoiceChip(label:Text(mr?'कुटुंबाचे आवडते (४★+)':'Family favourites (4★+)'),selected:topRatedOnly,onSelected:(_)=>setState(()=>topRatedOnly=!topRatedOnly)),
       ]),
       Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Text(mr?'एकूण '+visible.length.toString()+' पाककृती':visible.length.toString()+' recipes found',style:Theme.of(context).textTheme.bodySmall)),
-      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(query.isNotEmpty?(mr?'या शोधासाठी पाककृती सापडली नाही':'No recipes match your search'):(mr?'या विभागात पाककृती उपलब्ध नाहीत':'No recipes in this category yet.')))),
+      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(topRatedOnly&&ratedAverage.isEmpty?(mr?'कुटुंबाचे आवडते तयार करण्यासाठी मेनूमधील जेवणांना रेटिंग द्या.':'Rate meals on the Menu page to build your family favourites.'):(mr?'या विभागात पाककृती उपलब्ध नाहीत':'No recipes match these filters.')))),
       for(final meal in visible) Card(child:ExpansionTile(
         key:ValueKey(meal.en),
         title:Text(meal.name(mr)),
-        subtitle:Text(meal.ingredients.join(', ')),
+        subtitle:Text(meal.ingredients.join(', ')+(ratedAverage.containsKey(meal.en)?' • ★ '+ratedAverage[meal.en]!.toStringAsFixed(1):'')),
         trailing:IconButton(
           tooltip:mr?'आवडते बदला':'Toggle favourite',
           icon:Icon(AppStore.favourites.contains(meal.en)?Icons.favorite:Icons.favorite_border,color:AppStore.favourites.contains(meal.en)?Colors.red:null),
