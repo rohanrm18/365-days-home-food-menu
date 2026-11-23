@@ -61,8 +61,8 @@ class MenuPlanner {
     final n = DateTime(date.year,date.month,date.day).difference(DateTime(2026,1,1)).inDays.abs();
     final veg = isStrictVeg(date);
     final b = breakfasts[n % breakfasts.length];
-    final l = lunches[(n * 3 + 1) % lunches.length];
-    final d = dinners[(n * 5 + 2) % dinners.length];
+    final l = lunches[(n * 3 + 1) % (veg ? 5 : lunches.length)];
+    final d = dinners[(n * 5 + 2) % (veg ? 5 : dinners.length)];
     return DayMenu(b, veg ? l : (n.isEven ? l : nonVegLunch), veg ? d : (n % 3 == 0 ? nonVegDinner : d), veg);
   }
 }
