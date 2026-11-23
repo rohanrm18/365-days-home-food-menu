@@ -423,8 +423,15 @@ String groceryEstimate(String item, int uses) {
   };
   final base = estimates[item] ?? 'small quantity; adjust to taste';
   if (uses <= 1) return base;
-  final match = RegExp(r'^(\\d+(?:\\.\\d+)?)(?:–(\\d+(?:\\.\\d+)?))?\\s*(.*)
-
+  final match = RegExp(r'^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))?\s*(.*)$').firstMatch(base);
+  if (match == null) return base + ' (used in ' + uses.toString() + ' meals; adjust total)';
+  final low = double.parse(match.group(1)!) * uses;
+  final highText = match.group(2);
+  final unit = match.group(3) ?? '';
+  String fmt(double n) => n == n.roundToDouble() ? n.toInt().toString() : n.toStringAsFixed(1);
+  final amount = highText == null ? fmt(low) : fmt(low) + '–' + fmt(double.parse(highText) * uses);
+  return amount + ' ' + unit + ' (combined for ' + uses.toString() + ' meals)';
+}
 class GroceryPage extends StatefulWidget { final DateTime date; const GroceryPage({super.key,required this.date}); @override State<GroceryPage> createState()=>_GroceryPageState(); }
 class _GroceryPageState extends State<GroceryPage> {
   @override Widget build(BuildContext context) {
@@ -444,7 +451,7 @@ class _GroceryPageState extends State<GroceryPage> {
         Row(children:[const Icon(Icons.shopping_cart_outlined),const SizedBox(width:8),Expanded(child:Text(mr?'खरेदी करायचे':'Need to buy',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),Text('${items.where((x)=>!checked.contains(x)).length}')]),
         const SizedBox(height:6),
         if(items.where((x)=>!checked.contains(x)).isEmpty) Text(mr?'सर्व वस्तू घरी उपलब्ध आहेत.':'Everything is marked as available.'),
-        for(final item in items.where((x)=>!checked.contains(x))) CheckboxListTile(dense:true,value:false,title:Text(item),subtitle:Text(groceryEstimate(item)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.add(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
+        for(final item in items.where((x)=>!checked.contains(x))) CheckboxListTile(dense:true,value:false,title:Text(item),subtitle:Text(groceryEstimate(item, uses[item] ?? 1)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.add(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
       ]))),
       OutlinedButton.icon(onPressed:() async {await AppStore.setChecked({});setState((){});},icon:const Icon(Icons.refresh),label:Text(mr?'यादी रीसेट करा':'Reset checklist'))
     ]);
