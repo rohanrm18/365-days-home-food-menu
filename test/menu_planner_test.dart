@@ -8,6 +8,7 @@ void main() {
     expect(MenuPlanner.isStrictVeg(DateTime(2026, 11, 28)), isTrue);
     expect(MenuPlanner.isStrictVeg(DateTime(2026, 11, 24)), isFalse);
   });
+
   test('strict vegetarian menus exclude meat, fish and eggs', () {
     for (final date in [DateTime(2026, 11, 23), DateTime(2026, 11, 26), DateTime(2026, 11, 28)]) {
       final menu = MenuPlanner.forDate(date);
@@ -17,7 +18,6 @@ void main() {
       }
     }
   });
-}
 
   test('every date in the year has three complete meals', () {
     for (var offset = 0; offset < 365; offset++) {
