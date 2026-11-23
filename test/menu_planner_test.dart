@@ -47,6 +47,6 @@ void main() {
   });
 
   test('unknown grocery quantities are clearly marked as estimates', () {
-    expect(groceryEstimate('Saffron', 2), contains('adjust total'));
+    expect(groceryEstimate('Saffron', 2), contains('adjust to taste'));
   });
 }
