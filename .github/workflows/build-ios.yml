@@ -37,11 +37,23 @@ jobs:
         run: flutter test
       - name: Build iOS release app (unsigned)
         run: flutter build ios --release --no-codesign
+      - name: Package unsigned iPhone IPA for free-Apple-ID sideloading
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+          cd build/ios/ipa
+          zip -qr ../../../365-days-home-food-iphone-unsigned.ipa Payload
       - name: Package unsigned iOS app for inspection
         run: |
           cd build/ios/iphoneos
-          zip -r ../../../365-days-home-food-iphone-unsigned.zip Runner.app
-      - name: Upload unsigned iOS app
+          zip -qr ../../../365-days-home-food-iphone-unsigned.zip Runner.app
+      - name: Upload unsigned iPhone IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: 365-days-home-food-iphone-unsigned-ipa
+          path: 365-days-home-food-iphone-unsigned.ipa
+          retention-days: 14
+      - name: Upload unsigned iOS app inspection package
         uses: actions/upload-artifact@v4
         with:
           name: 365-days-home-food-iphone-unsigned
