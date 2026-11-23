@@ -8,8 +8,18 @@ import 'package:timezone/timezone.dart' as tz;
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppStore.init();
-  await ReminderService.init();
+
+  // Show the app immediately. Notification setup must never prevent startup.
   runApp(const HomeFoodApp());
+
+  // Notifications are a secondary feature; an OS/plugin scheduling error
+  // should not crash or block the main menu.
+  try {
+    await ReminderService.init();
+  } catch (error, stackTrace) {
+    debugPrint('Meal reminder initialization failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 class Meal {
