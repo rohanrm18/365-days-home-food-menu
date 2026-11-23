@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
@@ -544,6 +545,7 @@ class _GroceryPageState extends State<GroceryPage> {
         if(needed.isEmpty) Text(mr?'सर्व वस्तू उपलब्ध आहेत.':'Everything is marked as available.'),
         for(final item in needed) CheckboxListTile(dense:true,value:false,title:Text(item),subtitle:Text(groceryEstimate(item,uses[item]??1,people)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.add(scope+item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
       ]))),
+      OutlinedButton.icon(onPressed:() async {final lines=<String>[mr?'आठवड्याची खरेदी यादी':'Weekly grocery list',dateText(weekStart)+' – '+dateText(weekEnd),mr?'कुटुंब: '+people.toString()+' जण':'Family: '+people.toString()+' people','',mr?'खरेदी करायचे':'Need to buy',...needed.map((x)=>'☐ '+x+' — '+groceryEstimate(x,uses[x]??1,people)),'',mr?'घरी उपलब्ध':'Already at home',...available.map((x)=>'☑ '+x+' — '+groceryEstimate(x,uses[x]??1,people))];await Clipboard.setData(ClipboardData(text:lines.join('\\n')));if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(mr?'खरेदी यादी कॉपी झाली':'Grocery list copied')));},icon:const Icon(Icons.copy),label:Text(mr?'खरेदी यादी कॉपी करा':'Copy grocery list')),
       OutlinedButton.icon(onPressed:() async {final next=AppStore.checkedGroceries..removeWhere((x)=>x.startsWith(scope));await AppStore.setChecked(next);setState((){});},icon:const Icon(Icons.refresh),label:Text(mr?'या आठवड्याची यादी रीसेट करा':'Reset this week’s checklist'))
     ]);
   }
