@@ -148,7 +148,7 @@ class MealCard extends StatelessWidget {
       Text(meal.name(marathi),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:6),Text((marathi?'साहित्य: ':'Ingredients: ')+meal.ingredients.join(', ')),
       Text((marathi?'आधीची तयारी: ':'Advance prep: ')+meal.prep)
-    ]))));
+    ])));
   }
 }
 class RecipesPage extends StatelessWidget {
