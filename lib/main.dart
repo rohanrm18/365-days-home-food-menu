@@ -213,6 +213,27 @@ class RecipesPage extends StatelessWidget {
     ]);
   }
 }
+String groceryEstimate(String item) {
+  const estimates = <String, String>{
+    'Poha':'300 g', 'Rava':'250 g', 'Bhajani flour':'300 g', 'Idli batter':'500 g',
+    'Sabudana':'300 g', 'Besan':'250 g', 'Dosa batter':'500 g',
+    'Toor dal':'250 g', 'Rice':'500–700 g', 'Seasonal vegetables':'500 g',
+    'Cucumber':'2 medium', 'Curd':'500 g', 'Jowar flour':'400 g',
+    'Matki':'250 g', 'Paneer':'300 g', 'Wheat flour':'500 g',
+    'Brinjal':'2 medium', 'Chicken':'500 g', 'Eggs':'4–6',
+    'Moong dal':'250 g', 'Mixed vegetables':'400 g', 'Carrot':'2 medium',
+    'Beans':'150 g', 'Peas':'150 g', 'Fish':'500 g', 'Coconut':'1 medium',
+    'Onion':'3–4 medium', 'Potato':'2–3 medium', 'Tomato':'3 medium',
+    'Peanuts':'100 g', 'Coriander':'1 bunch', 'Lemon':'2',
+    'Curry leaves':'1 small sprig', 'Green chilli':'4–5',
+    'Roasted gram':'100 g', 'Cumin':'2 tsp', 'Garlic':'1 bulb',
+    'Goda masala':'2 tbsp', 'Ginger-garlic':'2 tbsp', 'Spices':'as needed',
+    'Ghee':'2 tbsp', 'Papad':'4 pieces', 'Tamarind':'small lemon-sized piece',
+    'Yogurt':'150 g', 'Whole spices':'2 tbsp'
+  };
+  return estimates[item] ?? 'small quantity; adjust to taste';
+}
+
 class GroceryPage extends StatefulWidget { final DateTime date; const GroceryPage({super.key,required this.date}); @override State<GroceryPage> createState()=>_GroceryPageState(); }
 class _GroceryPageState extends State<GroceryPage> {
   @override Widget build(BuildContext context) {
@@ -220,18 +241,19 @@ class _GroceryPageState extends State<GroceryPage> {
     return ListView(padding:const EdgeInsets.all(16),children:[
       Text(mr?'खरेदी यादी':'Shopping list',style:Theme.of(context).textTheme.titleLarge),
       Text(widget.date.day.toString()+'/'+widget.date.month.toString()+'/'+widget.date.year.toString()+' • '+items.length.toString()+' '+(mr?'वस्तू':'items')),
-      const SizedBox(height:12),
+      Padding(padding:const EdgeInsets.only(top:6,bottom:6),child:Text(mr?'४ जणांसाठी अंदाजे प्रमाण • प्रत्यक्ष भूक आणि पाककृतीनुसार बदलू शकते.':'Estimated quantities for 4 people • adjust for appetite and your recipe.',style:Theme.of(context).textTheme.bodySmall)),
+      const SizedBox(height:8),
       Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[const Icon(Icons.inventory_2_outlined),const SizedBox(width:8),Expanded(child:Text(mr?'घरी उपलब्ध':'Already at home',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),Text('${items.where((x)=>checked.contains(x)).length}')]),
         const SizedBox(height:6),
         if(items.where((x)=>checked.contains(x)).isEmpty) Text(mr?'अजून कोणतीही वस्तू उपलब्ध म्हणून चिन्हांकित नाही.':'No items marked as available yet.'),
-        for(final item in items.where((x)=>checked.contains(x))) CheckboxListTile(dense:true,value:true,title:Text(item),onChanged:(v) async {final next=AppStore.checkedGroceries;next.remove(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
+        for(final item in items.where((x)=>checked.contains(x))) CheckboxListTile(dense:true,value:true,title:Text(item),subtitle:Text(groceryEstimate(item)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.remove(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
       ]))),
       Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[const Icon(Icons.shopping_cart_outlined),const SizedBox(width:8),Expanded(child:Text(mr?'खरेदी करायचे':'Need to buy',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),Text('${items.where((x)=>!checked.contains(x)).length}')]),
         const SizedBox(height:6),
         if(items.where((x)=>!checked.contains(x)).isEmpty) Text(mr?'सर्व वस्तू घरी उपलब्ध आहेत.':'Everything is marked as available.'),
-        for(final item in items.where((x)=>!checked.contains(x))) CheckboxListTile(dense:true,value:false,title:Text(item),onChanged:(v) async {final next=AppStore.checkedGroceries;next.add(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
+        for(final item in items.where((x)=>!checked.contains(x))) CheckboxListTile(dense:true,value:false,title:Text(item),subtitle:Text(groceryEstimate(item)),onChanged:(v) async {final next=AppStore.checkedGroceries;next.add(item);await AppStore.setChecked(next);setState((){});},controlAffinity:ListTileControlAffinity.leading,contentPadding:EdgeInsets.zero)
       ]))),
       OutlinedButton.icon(onPressed:() async {await AppStore.setChecked({});setState((){});},icon:const Icon(Icons.refresh),label:Text(mr?'यादी रीसेट करा':'Reset checklist'))
     ]);
