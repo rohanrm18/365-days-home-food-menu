@@ -41,21 +41,21 @@ jobs:
           s = p.read_text()
           if is_kts:
               if 'isCoreLibraryDesugaringEnabled = true' not in s:
-                  s, count = re.subn(r'compileOptions\\s*\\{', lambda m: m.group(0) + '\\n        isCoreLibraryDesugaringEnabled = true', s, count=1)
+                  s, count = re.subn(r'compileOptions\s*\{', lambda m: m.group(0) + '\n        isCoreLibraryDesugaringEnabled = true', s, count=1)
                   if count == 0:
                       raise SystemExit('Could not find compileOptions block')
               dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
           else:
               if 'coreLibraryDesugaringEnabled true' not in s:
-                  s, count = re.subn(r'compileOptions\\s*\\{', lambda m: m.group(0) + '\\n        coreLibraryDesugaringEnabled true', s, count=1)
+                  s, count = re.subn(r'compileOptions\s*\{', lambda m: m.group(0) + '\n        coreLibraryDesugaringEnabled true', s, count=1)
                   if count == 0:
                       raise SystemExit('Could not find compileOptions block')
               dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
           if 'desugar_jdk_libs' not in s:
-              if re.search(r'dependencies\\s*\\{', s):
-                  s = re.sub(r'(dependencies\\s*\\{)', lambda m: m.group(1) + '\\n    ' + dep, s, count=1)
+              if re.search(r'dependencies\s*\{', s):
+                  s = re.sub(r'(dependencies\s*\{)', lambda m: m.group(1) + '\n    ' + dep, s, count=1)
               else:
-                  s += '\\n\\ndependencies {\\n    ' + dep + '\\n}\\n'
+                  s += '\n\ndependencies {\n    ' + dep + '\n}\n'
           p.write_text(s)
           if 'desugar_jdk_libs' not in p.read_text():
               raise SystemExit('Failed to add desugar_jdk_libs dependency')
