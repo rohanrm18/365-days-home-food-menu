@@ -465,23 +465,38 @@ class FestivalMenuCard extends StatelessWidget {
   }
 }
 
+const snacks = <Meal>[
+  Meal('Kanda bhaji','कांदा भजी',['Onion','Besan','Rice flour','Chilli powder','Oil'],'Slice onions; mix with flour and spices just before frying.'),
+  Meal('Dhokla','ढोकळा',['Besan','Curd','Lemon','Mustard seeds','Curry leaves'],'Prepare batter and keep steamer ready.'),
+  Meal('Bhel puri','भेळपुरी',['Puffed rice','Onion','Tomato','Potato','Chutneys','Coriander'],'Chop vegetables; mix just before serving to keep it crisp.'),
+  Meal('Roasted masala makhana','मसाला मखाणा',['Makhana','Ghee','Turmeric','Chilli powder','Salt'],'Keep makhana and spices ready; roast shortly before serving.'),
+  Meal('Vegetable cutlet','भाजी कटलेट',['Potato','Carrot','Peas','Bread crumbs','Spices'],'Boil and mash vegetables; shape cutlets and refrigerate until cooking.'),
+];
 class RecipesPage extends StatefulWidget {
   const RecipesPage({super.key});
   @override State<RecipesPage> createState() => _RecipesPageState();
 }
 class _RecipesPageState extends State<RecipesPage> {
   bool favouritesOnly = false;
+  String selectedCategory = 'All';
   final TextEditingController searchController = TextEditingController();
   @override void dispose() { searchController.dispose(); super.dispose(); }
   @override Widget build(BuildContext context) {
     final mr=AppStore.marathi;
     final query=searchController.text.trim().toLowerCase();
-    final all=[...breakfasts,...lunches,...dinners].toSet().toList();
+    final all=[...breakfasts,...lunches,...dinners,...snacks].toSet().toList();
     final visible=all.where((meal) {
       final favouriteMatch=!favouritesOnly||AppStore.favourites.contains(meal.en);
       final searchMatch=query.isEmpty||meal.en.toLowerCase().contains(query)||meal.mr.toLowerCase().contains(query)||meal.ingredients.any((item)=>item.toLowerCase().contains(query));
-      return favouriteMatch&&searchMatch;
+      final categoryMatch=selectedCategory=='All'||
+        (selectedCategory=='Breakfast'&&breakfasts.contains(meal))||
+        (selectedCategory=='Lunch'&&lunches.contains(meal))||
+        (selectedCategory=='Dinner'&&dinners.contains(meal))||
+        (selectedCategory=='Snacks'&&snacks.contains(meal));
+      return favouriteMatch&&searchMatch&&categoryMatch;
     }).toList();
+    final categories=<String>['All','Breakfast','Lunch','Dinner','Snacks'];
+    final categoryMr=<String,String>{'All':'सर्व','Breakfast':'नाश्ता','Lunch':'दुपारचे जेवण','Dinner':'रात्रीचे जेवण','Snacks':'खाऊ'};
     return ListView(padding:const EdgeInsets.all(12),children:[
       Text(mr?'पाककृती आणि साहित्य':'Recipes and ingredients',style:Theme.of(context).textTheme.titleLarge),
       const SizedBox(height:8),
@@ -496,12 +511,20 @@ class _RecipesPageState extends State<RecipesPage> {
         ),
       ),
       const SizedBox(height:8),
+      Wrap(spacing:8,runSpacing:6,children:[
+        for(final category in categories) ChoiceChip(
+          label:Text(mr?categoryMr[category]!:category),
+          selected:selectedCategory==category,
+          onSelected:(_)=>setState(()=>selectedCategory=category),
+        ),
+      ]),
+      const SizedBox(height:6),
       Wrap(spacing:8,children:[
         ChoiceChip(label:Text(mr?'सर्व पाककृती':'All recipes'),selected:!favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=false)),
         ChoiceChip(label:Text(mr?'आवडत्या पाककृती':'Favourites'),selected:favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=true)),
       ]),
       Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Text(mr?'एकूण '+visible.length.toString()+' पाककृती':visible.length.toString()+' recipes found',style:Theme.of(context).textTheme.bodySmall)),
-      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(query.isNotEmpty?(mr?'या शोधासाठी पाककृती सापडली नाही':'No recipes match your search'):(mr?'अजून आवडती पाककृती निवडलेली नाही':'No favourite recipes yet. Tap the heart on a meal to save it.')))),
+      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(query.isNotEmpty?(mr?'या शोधासाठी पाककृती सापडली नाही':'No recipes match your search'):(mr?'या विभागात पाककृती उपलब्ध नाहीत':'No recipes in this category yet.')))),
       for(final meal in visible) Card(child:ExpansionTile(
         key:ValueKey(meal.en),
         title:Text(meal.name(mr)),
