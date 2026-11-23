@@ -224,6 +224,49 @@ class HomePage extends StatelessWidget {
     ]);
   }
 }
+String mealPhotoUrl(Meal meal) {
+  final name = meal.en.toLowerCase();
+  String photo;
+  if (name.contains('poha') || name.contains('upma') || name.contains('idli') || name.contains('dosa') || name.contains('appe') || name.contains('thepla') || name.contains('paratha') || name.contains('chilla') || name.contains('thalipeeth') || name.contains('sabudana')) {
+    photo = 'photo-1547592180-85f173990554';
+  } else if (name.contains('biryani') || name.contains('pulao') || name.contains('rice') || name.contains('khichdi') || name.contains('bhaat')) {
+    photo = 'photo-1596797038530-2c107229654b';
+  } else if (name.contains('paneer') || name.contains('palak') || name.contains('curry') || name.contains('chole') || name.contains('rajma') || name.contains('usal') || name.contains('pithla') || name.contains('kadhi')) {
+    photo = 'photo-1565557623262-b51c2513a641';
+  } else if (name.contains('modak') || name.contains('poli') || name.contains('ladoo') || name.contains('karanji') || name.contains('shrikhand') || name.contains('cake') || name.contains('sheer') || name.contains('porridge')) {
+    photo = 'photo-1601050690597-df0568f70950';
+  } else if (name.contains('fish') || name.contains('chicken') || name.contains('egg')) {
+    photo = 'photo-1603894584373-5ac82b2ae398';
+  } else {
+    photo = 'photo-1585937421612-70a008356fbe';
+  }
+  return 'https://images.unsplash.com/' + photo + '?auto=format&fit=crop&w=1000&q=80';
+}
+
+class MealPhoto extends StatelessWidget {
+  final Meal meal;
+  const MealPhoto({super.key, required this.meal});
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Image.network(
+          mealPhotoUrl(meal),
+          fit: BoxFit.cover,
+          cacheWidth: 1000,
+          errorBuilder: (context, error, stackTrace) => Container(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            alignment: Alignment.center,
+            child: const Icon(Icons.restaurant, size: 42),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class MealCard extends StatelessWidget {
   final String title; final Meal meal; final bool marathi; final VoidCallback onChanged; final VoidCallback onReplace;
   const MealCard({super.key,required this.title,required this.meal,required this.marathi,required this.onChanged,required this.onReplace});
@@ -232,6 +275,8 @@ class MealCard extends StatelessWidget {
     return Card(margin:const EdgeInsets.only(bottom:10),child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[Expanded(child:Text(title,style:Theme.of(context).textTheme.labelLarge?.copyWith(color:Theme.of(context).colorScheme.primary))),IconButton(tooltip:marathi?'जेवण बदला':'Replace meal',onPressed:onReplace,icon:const Icon(Icons.shuffle)),IconButton(onPressed:() async {await AppStore.toggleFavourite(meal.en);onChanged();},icon:Icon(fav?Icons.favorite:Icons.favorite_border,color:fav?Colors.red:null))]),
       Text(meal.name(marathi),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
+      const SizedBox(height:10),
+      MealPhoto(meal:meal),
       const SizedBox(height:6),Text((marathi?'साहित्य: ':'Ingredients: ')+meal.ingredients.join(', ')),
       Text((marathi?'आधीची तयारी: ':'Advance prep: ')+meal.prep)
     ])));
@@ -404,6 +449,7 @@ class RecipesPage extends StatelessWidget {
     final mr=AppStore.marathi; final all=[...breakfasts,...lunches,...dinners].toSet().toList();
     return ListView(padding:const EdgeInsets.all(12),children:[Text(mr?'पाककृती आणि साहित्य':'Recipes and ingredients',style:Theme.of(context).textTheme.titleLarge),
       for(final meal in all) Card(child:ExpansionTile(title:Text(meal.name(mr)),subtitle:Text(meal.ingredients.join(', ')),children:[
+        Padding(padding:const EdgeInsets.fromLTRB(12,8,12,4),child:MealPhoto(meal:meal)),
         ListTile(title:Text(mr?'आधीची तयारी':'Preparation'),subtitle:Text(meal.prep)),
         Padding(padding:const EdgeInsets.fromLTRB(16,8,16,4),child:Text(mr?'कृती — क्रमवार':'Step-by-step cooking instructions',style:Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight:FontWeight.bold))),
         for(final entry in recipeSteps(meal,mr).asMap().entries) ListTile(dense:true,leading:CircleAvatar(radius:14,child:Text('${entry.key+1}')),title:Text(entry.value))
