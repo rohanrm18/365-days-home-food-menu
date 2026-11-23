@@ -137,7 +137,7 @@ class AppStore {
   static bool get marathi => prefs.getBool('marathi') ?? false;
   static bool get reminders => prefs.getBool('reminders') ?? true;
   static int get householdSize => prefs.getInt('household_size') ?? 4;
-  static Future<void> setHouseholdSize(int v) async { await prefs.setInt('household_size', v.clamp(1, 12)); }
+  static Future<void> setHouseholdSize(int v) async { await prefs.setInt('household_size', v.clamp(1, 12).toInt()); }
   static Future<void> setMarathi(bool v) async { await prefs.setBool('marathi',v); }
   static Future<void> setReminders(bool v) async { await prefs.setBool('reminders',v); }
   static Set<String> get checkedGroceries => (prefs.getStringList('checked_groceries') ?? []).toSet();
