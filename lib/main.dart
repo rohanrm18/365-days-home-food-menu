@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,6 +57,28 @@ const nonVegLunch = Meal('Chicken curry, rice and salad','चिकन रस्
 const nonVegDinner = Meal('Egg curry and chapati','अंडा करी आणि चपाती',['Eggs','Onion','Tomato','Wheat flour','Spices'],'Boil eggs; chop onion and tomato.');
 
 class MenuPlanner {
+  static final Map<String, String> _overrides = {};
+  static void loadOverrides(String? raw) {
+    _overrides.clear();
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final decoded = jsonDecode(raw) as Map<String, dynamic>;
+      for (final entry in decoded.entries) { _overrides[entry.key] = entry.value.toString(); }
+    } catch (_) { _overrides.clear(); }
+  }
+  static String _key(DateTime date, String slot) => '${date.year}-${date.month}-${date.day}:$slot';
+  static Future<void> replaceMeal(DateTime date, String slot) async {
+    final menu = forDate(date);
+    final current = slot == 'breakfast' ? menu.breakfast : slot == 'lunch' ? menu.lunch : menu.dinner;
+    final pool = slot == 'breakfast' ? breakfasts : slot == 'lunch'
+      ? (menu.strictVeg ? lunches.take(5).toList() : [...lunches, nonVegLunch])
+      : (menu.strictVeg ? dinners.take(5).toList() : [...dinners, nonVegDinner]);
+    final choices = pool.where((meal) => meal.en != current.en).toList();
+    if (choices.isEmpty) return;
+    final next = choices.first;
+    _overrides[_key(date, slot)] = next.en;
+    await AppStore.saveMealOverrides(jsonEncode(_overrides));
+  }
   static bool isStrictVeg(DateTime d) => [DateTime.monday, DateTime.thursday, DateTime.saturday].contains(d.weekday);
   static DayMenu forDate(DateTime date) {
     final n = DateTime(date.year,date.month,date.day).difference(DateTime(2026,1,1)).inDays.abs();
@@ -63,12 +86,19 @@ class MenuPlanner {
     final b = breakfasts[n % breakfasts.length];
     final l = lunches[(n * 3 + 1) % (veg ? 5 : lunches.length)];
     final d = dinners[(n * 5 + 2) % (veg ? 5 : dinners.length)];
-    return DayMenu(b, veg ? l : (n.isEven ? l : nonVegLunch), veg ? d : (n % 3 == 0 ? nonVegDinner : d), veg);
+    final baseLunch = veg ? l : (n.isEven ? l : nonVegLunch);
+    final baseDinner = veg ? d : (n % 3 == 0 ? nonVegDinner : d);
+    Meal pick(Meal base, String slot, List<Meal> pool) {
+      final name = _overrides[_key(date, slot)];
+      for (final meal in pool) { if (meal.en == name) return meal; }
+      return base;
+    }
+    return DayMenu(pick(b, 'breakfast', breakfasts), pick(baseLunch, 'lunch', veg ? lunches.take(5).toList() : [...lunches, nonVegLunch]), pick(baseDinner, 'dinner', veg ? dinners.take(5).toList() : [...dinners, nonVegDinner]), veg);
   }
 }
 class AppStore {
   static late SharedPreferences prefs;
-  static Future<void> init() async { prefs = await SharedPreferences.getInstance(); }
+  static Future<void> init() async { prefs = await SharedPreferences.getInstance(); MenuPlanner.loadOverrides(prefs.getString('meal_overrides')); }
   static bool get marathi => prefs.getBool('marathi') ?? false;
   static bool get reminders => prefs.getBool('reminders') ?? true;
   static Future<void> setMarathi(bool v) async { await prefs.setBool('marathi',v); }
@@ -76,6 +106,7 @@ class AppStore {
   static Set<String> get checkedGroceries => (prefs.getStringList('checked_groceries') ?? []).toSet();
   static Future<void> setChecked(Set<String> v) async { await prefs.setStringList('checked_groceries',v.toList()); }
   static List<String> get favourites => prefs.getStringList('favourites') ?? [];
+  static Future<void> saveMealOverrides(String value) async { await prefs.setString('meal_overrides', value); }
   static Future<void> toggleFavourite(String key) async {
     final list = favourites;
     if (list.contains(key)) { list.remove(key); } else { list.add(key); }
@@ -133,20 +164,20 @@ class HomePage extends StatelessWidget {
       const SizedBox(height:10),
       Card(child:ListTile(leading:const Icon(Icons.event),title:Text(date.day.toString()+'/'+date.month.toString()+'/'+date.year.toString()),subtitle:Text(menu.strictVeg?(mr?'कडक शाकाहारी दिवस':'Strict vegetarian day'):(mr?'शाकाहारी आणि मांसाहारी पर्याय':'Vegetarian and non-vegetarian options')),trailing:const Icon(Icons.calendar_month),onTap:() async { final d=await showDatePicker(context:context,initialDate:date,firstDate:DateTime(2025),lastDate:DateTime(2035)); if(d!=null) onDate(d); })),
       const SizedBox(height:8),
-      MealCard(title:mr?'नाश्ता':'Breakfast',meal:menu.breakfast,marathi:mr,onChanged:onChanged),
-      MealCard(title:mr?'दुपारचे जेवण':'Lunch',meal:menu.lunch,marathi:mr,onChanged:onChanged),
-      MealCard(title:mr?'रात्रीचे जेवण':'Dinner',meal:menu.dinner,marathi:mr,onChanged:onChanged),
+      MealCard(title:mr?'नाश्ता':'Breakfast',meal:menu.breakfast,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'breakfast'); onChanged(); }),
+      MealCard(title:mr?'दुपारचे जेवण':'Lunch',meal:menu.lunch,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'lunch'); onChanged(); }),
+      MealCard(title:mr?'रात्रीचे जेवण':'Dinner',meal:menu.dinner,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'dinner'); onChanged(); }),
       Card(color:Theme.of(context).colorScheme.secondaryContainer,child:ListTile(leading:const Icon(Icons.notifications_active),title:Text(mr?'उद्याच्या तयारीची आठवण':'Tomorrow preparation reminder'),subtitle:Text(mr?'संध्याकाळी ७:०० वाजता':'Daily at 7:00 PM India time')))
     ]);
   }
 }
 class MealCard extends StatelessWidget {
-  final String title; final Meal meal; final bool marathi; final VoidCallback onChanged;
-  const MealCard({super.key,required this.title,required this.meal,required this.marathi,required this.onChanged});
+  final String title; final Meal meal; final bool marathi; final VoidCallback onChanged; final VoidCallback onReplace;
+  const MealCard({super.key,required this.title,required this.meal,required this.marathi,required this.onChanged,required this.onReplace});
   @override Widget build(BuildContext context) {
     final fav=AppStore.favourites.contains(meal.en);
     return Card(margin:const EdgeInsets.only(bottom:10),child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Row(children:[Expanded(child:Text(title,style:Theme.of(context).textTheme.labelLarge?.copyWith(color:Theme.of(context).colorScheme.primary))),IconButton(onPressed:() async {await AppStore.toggleFavourite(meal.en);onChanged();},icon:Icon(fav?Icons.favorite:Icons.favorite_border,color:fav?Colors.red:null))]),
+      Row(children:[Expanded(child:Text(title,style:Theme.of(context).textTheme.labelLarge?.copyWith(color:Theme.of(context).colorScheme.primary))),IconButton(tooltip:marathi?'जेवण बदला':'Replace meal',onPressed:onReplace,icon:const Icon(Icons.shuffle)),IconButton(onPressed:() async {await AppStore.toggleFavourite(meal.en);onChanged();},icon:Icon(fav?Icons.favorite:Icons.favorite_border,color:fav?Colors.red:null))]),
       Text(meal.name(marathi),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:6),Text((marathi?'साहित्य: ':'Ingredients: ')+meal.ingredients.join(', ')),
       Text((marathi?'आधीची तयारी: ':'Advance prep: ')+meal.prep)
