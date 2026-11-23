@@ -465,19 +465,41 @@ class FestivalMenuCard extends StatelessWidget {
   }
 }
 
-class RecipesPage extends StatelessWidget {
+class RecipesPage extends StatefulWidget {
   const RecipesPage({super.key});
+  @override State<RecipesPage> createState() => _RecipesPageState();
+}
+class _RecipesPageState extends State<RecipesPage> {
+  bool favouritesOnly = false;
   @override Widget build(BuildContext context) {
-    final mr=AppStore.marathi; final all=[...breakfasts,...lunches,...dinners].toSet().toList();
-    return ListView(padding:const EdgeInsets.all(12),children:[Text(mr?'पाककृती आणि साहित्य':'Recipes and ingredients',style:Theme.of(context).textTheme.titleLarge),
-      for(final meal in all) Card(child:ExpansionTile(title:Text(meal.name(mr)),subtitle:Text(meal.ingredients.join(', ')),children:[
-        Padding(padding:const EdgeInsets.fromLTRB(12,8,12,4),child:MealPhoto(meal:meal)),
-        Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:6),child:Text(mr?'वेळ: अंदाजे ३०–४५ मिनिटे • प्रमाण: '+AppStore.householdSize.toString()+' जण':'Cooking time: approx. 30–45 min • Serves: '+AppStore.householdSize.toString(),style:Theme.of(context).textTheme.bodySmall)),
-        ListTile(title:Text(mr?'साहित्याचे अंदाजे प्रमाण':'Estimated ingredient quantities'),subtitle:Text(meal.ingredients.map((item)=>item+' — '+groceryEstimate(item,1,AppStore.householdSize)).join('\n'))),
-        ListTile(title:Text(mr?'आधीची तयारी':'Preparation'),subtitle:Text(meal.prep)),
-        Padding(padding:const EdgeInsets.fromLTRB(16,8,16,4),child:Text(mr?'कृती — क्रमवार':'Step-by-step cooking instructions',style:Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight:FontWeight.bold))),
-        for(final entry in recipeSteps(meal,mr).asMap().entries) ListTile(dense:true,leading:CircleAvatar(radius:14,child:Text('${entry.key+1}')),title:Text(entry.value))
-      ]))
+    final mr=AppStore.marathi;
+    final all=[...breakfasts,...lunches,...dinners].toSet().toList();
+    final visible=all.where((meal)=>!favouritesOnly||AppStore.favourites.contains(meal.en)).toList();
+    return ListView(padding:const EdgeInsets.all(12),children:[
+      Text(mr?'पाककृती आणि साहित्य':'Recipes and ingredients',style:Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height:8),
+      Wrap(spacing:8,children:[
+        ChoiceChip(label:Text(mr?'सर्व पाककृती':'All recipes'),selected:!favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=false)),
+        ChoiceChip(label:Text(mr?'आवडत्या पाककृती':'Favourites'),selected:favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=true)),
+      ]),
+      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(mr?'अजून आवडती पाककृती निवडलेली नाही':'No favourite recipes yet. Tap the heart on a meal to save it.'))),
+      for(final meal in visible) Card(child:ExpansionTile(
+        key:ValueKey(meal.en),
+        title:Text(meal.name(mr)),
+        subtitle:Text(meal.ingredients.join(', ')),
+        trailing:IconButton(
+          tooltip:mr?'आवडते बदला':'Toggle favourite',
+          icon:Icon(AppStore.favourites.contains(meal.en)?Icons.favorite:Icons.favorite_border,color:AppStore.favourites.contains(meal.en)?Colors.red:null),
+          onPressed:() async {await AppStore.toggleFavourite(meal.en);setState((){});},
+        ),
+        children:[
+          Padding(padding:const EdgeInsets.fromLTRB(12,8,12,4),child:MealPhoto(meal:meal)),
+          Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:6),child:Text(mr?'वेळ: अंदाजे ३०–४५ मिनिटे • प्रमाण: '+AppStore.householdSize.toString()+' जण':'Cooking time: approx. 30–45 min • Serves: '+AppStore.householdSize.toString(),style:Theme.of(context).textTheme.bodySmall)),
+          ListTile(title:Text(mr?'साहित्याचे अंदाजे प्रमाण':'Estimated ingredient quantities'),subtitle:Text(meal.ingredients.map((item)=>item+' — '+groceryEstimate(item,1,AppStore.householdSize)).join('\\n'))),
+          ListTile(title:Text(mr?'आधीची तयारी':'Preparation'),subtitle:Text(meal.prep)),
+          Padding(padding:const EdgeInsets.fromLTRB(16,8,16,4),child:Text(mr?'कृती — क्रमवार':'Step-by-step cooking instructions',style:Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight:FontWeight.bold))),
+          for(final entry in recipeSteps(meal,mr).asMap().entries) ListTile(dense:true,leading:CircleAvatar(radius:14,child:Text('${entry.key+1}')),title:Text(entry.value))
+        ]))
     ]);
   }
 }
