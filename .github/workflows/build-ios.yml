@@ -36,6 +36,14 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Run tests
         run: flutter test
+      - name: Build installable web app (PWA)
+        run: flutter build web --release
+      - name: Upload web app for hosting
+        uses: actions/upload-artifact@v4
+        with:
+          name: 365-days-home-food-web
+          path: build/web/
+          retention-days: 14
       - name: Build iOS release app (unsigned)
         run: flutter build ios --release --no-codesign
       - name: Package unsigned iPhone IPA for free-Apple-ID sideloading
