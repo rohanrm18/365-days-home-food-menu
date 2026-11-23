@@ -162,7 +162,24 @@ class HomePage extends StatelessWidget {
     return ListView(padding:const EdgeInsets.all(16),children:[
       Text(mr?'तुमच्या कुटुंबाचा रोजचा आहार':'Your family daily meal plan',style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:10),
-      Card(child:ListTile(leading:const Icon(Icons.event),title:Text(date.day.toString()+'/'+date.month.toString()+'/'+date.year.toString()),subtitle:Text(menu.strictVeg?(mr?'कडक शाकाहारी दिवस':'Strict vegetarian day'):(mr?'शाकाहारी आणि मांसाहारी पर्याय':'Vegetarian and non-vegetarian options')),trailing:const Icon(Icons.calendar_month),onTap:() async { final d=await showDatePicker(context:context,initialDate:date,firstDate:DateTime(2025),lastDate:DateTime(2035)); if(d!=null) onDate(d); })),
+      Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text(mr?'आठवड्याचा मेनू':'Weekly menu',style:Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height:8),
+        Row(children:List.generate(7,(i){
+          final start=DateTime(date.year,date.month,date.day).subtract(Duration(days:date.weekday-1));
+          final day=start.add(Duration(days:i));
+          final active=day.year==date.year&&day.month==date.month&&day.day==date.day;
+          return Expanded(child:Padding(padding:const EdgeInsets.symmetric(horizontal:2),child:InkWell(
+            borderRadius:BorderRadius.circular(12),onTap:()=>onDate(day),
+            child:Container(padding:const EdgeInsets.symmetric(vertical:9),decoration:BoxDecoration(color:active?Theme.of(context).colorScheme.primaryContainer:null,borderRadius:BorderRadius.circular(12)),
+              child:Column(children:[Text(['M','T','W','T','F','S','S'][i],style:Theme.of(context).textTheme.labelSmall),const SizedBox(height:5),Text(day.day.toString(),style:TextStyle(fontWeight:active?FontWeight.bold:FontWeight.normal))])))));
+        }))
+      ]))),
+      Card(child:Padding(padding:const EdgeInsets.all(8),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Text(mr?'मासिक कॅलेंडर':'Monthly calendar',style:Theme.of(context).textTheme.titleMedium)),
+        CalendarDatePicker(initialDate:date,firstDate:DateTime(2025),lastDate:DateTime(2035),onDateChanged:onDate)
+      ]))),
+      Card(child:ListTile(leading:const Icon(Icons.event),title:Text(date.day.toString()+'/'+date.month.toString()+'/'+date.year.toString()),subtitle:Text(menu.strictVeg?(mr?'कडक शाकाहारी दिवस':'Strict vegetarian day'):(mr?'शाकाहारी आणि मांसाहारी पर्याय':'Vegetarian and non-vegetarian options')),trailing:const Icon(Icons.calendar_month))),
       const SizedBox(height:8),
       MealCard(title:mr?'नाश्ता':'Breakfast',meal:menu.breakfast,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'breakfast'); onChanged(); }),
       MealCard(title:mr?'दुपारचे जेवण':'Lunch',meal:menu.lunch,marathi:mr,onChanged:onChanged,onReplace:() async { await MenuPlanner.replaceMeal(date,'lunch'); onChanged(); }),
