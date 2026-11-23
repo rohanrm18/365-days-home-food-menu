@@ -109,8 +109,8 @@ class MenuPlanner {
     final n = DateTime(date.year,date.month,date.day).difference(DateTime(2026,1,1)).inDays.abs();
     final veg = isStrictVeg(date);
     final b = breakfasts[n % breakfasts.length];
-    final l = lunches[(n * 3 + 1) % (veg ? 5 : lunches.length)];
-    final d = dinners[(n * 5 + 2) % (veg ? 5 : dinners.length)];
+    final l = lunches[(n * 3 + 1) % (veg ? 12 : lunches.length)];
+    final d = dinners[(n * 5 + 2) % (veg ? 12 : dinners.length)];
     final baseLunch = veg ? l : (n.isEven ? l : nonVegLunch);
     final baseDinner = veg ? d : (n % 3 == 0 ? nonVegDinner : d);
     Meal pick(Meal base, String slot, List<Meal> pool) {
@@ -197,12 +197,12 @@ class HomePage extends StatelessWidget {
           return Expanded(child:Padding(padding:const EdgeInsets.symmetric(horizontal:2),child:InkWell(
             borderRadius:BorderRadius.circular(12),onTap:()=>onDate(day),
             child:Container(padding:const EdgeInsets.symmetric(vertical:9),decoration:BoxDecoration(color:active?Theme.of(context).colorScheme.primaryContainer:null,borderRadius:BorderRadius.circular(12)),
-              child:Column(children:[Text(['M','T','W','T','F','S','S'][i],style:Theme.of(context).textTheme.labelSmall),const SizedBox(height:5),Text(day.day.toString(),style:TextStyle(fontWeight:active?FontWeight.bold:FontWeight.normal))])))));
+              child:Column(children:[Text(mr?['सोम','मंगळ','बुध','गुरु','शुक्र','शनि','रवि'][i]:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i],style:Theme.of(context).textTheme.labelSmall),const SizedBox(height:5),Text(day.day.toString(),style:TextStyle(fontWeight:active?FontWeight.bold:FontWeight.normal))])))));
         }))
       ]))),
       Card(child:Padding(padding:const EdgeInsets.all(8),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Padding(padding:const EdgeInsets.symmetric(horizontal:8),child:Text(mr?'मासिक कॅलेंडर':'Monthly calendar',style:Theme.of(context).textTheme.titleMedium)),
-        CalendarDatePicker(initialDate:date,firstDate:DateTime(2025),lastDate:DateTime(2035),onDateChanged:onDate)
+        CalendarDatePicker(key:ValueKey('${date.year}-${date.month}-${date.day}'),initialDate:date,firstDate:DateTime(2025),lastDate:DateTime(2035),onDateChanged:onDate)
       ]))),
       Card(child:ListTile(leading:const Icon(Icons.event),title:Text(date.day.toString()+'/'+date.month.toString()+'/'+date.year.toString()),subtitle:Text(menu.strictVeg?(mr?'कडक शाकाहारी दिवस':'Strict vegetarian day'):(mr?'शाकाहारी आणि मांसाहारी पर्याय':'Vegetarian and non-vegetarian options')),trailing:const Icon(Icons.calendar_month))),
       const SizedBox(height:8),
