@@ -73,9 +73,13 @@ class MenuPlanner {
     final pool = slot == 'breakfast' ? breakfasts : slot == 'lunch'
       ? (menu.strictVeg ? lunches.take(5).toList() : [...lunches, nonVegLunch])
       : (menu.strictVeg ? dinners.take(5).toList() : [...dinners, nonVegDinner]);
-    final choices = pool.where((meal) => meal.en != current.en).toList();
-    if (choices.isEmpty) return;
-    final next = choices.first;
+    // Keep one entry per dish, then move forward from the currently selected meal.
+    // This avoids duplicate options and cycles through the available pool.
+    final uniquePool = <String, Meal>{for (final meal in pool) meal.en: meal}.values.toList();
+    if (uniquePool.length < 2) return;
+    final currentIndex = uniquePool.indexWhere((meal) => meal.en == current.en);
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % uniquePool.length;
+    final next = uniquePool[nextIndex];
     _overrides[_key(date, slot)] = next.en;
     await AppStore.saveMealOverrides(jsonEncode(_overrides));
   }
