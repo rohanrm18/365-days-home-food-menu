@@ -32,7 +32,7 @@ jobs:
       - name: Package unsigned iOS app for inspection
         run: |
           cd build/ios/iphoneos
-          zip -r ../../../../365-days-home-food-iphone-unsigned.zip Runner.app
+          zip -r ../../../365-days-home-food-iphone-unsigned.zip Runner.app
       - name: Upload unsigned iOS app
         uses: actions/upload-artifact@v4
         with:
