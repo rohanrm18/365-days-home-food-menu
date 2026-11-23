@@ -47,3 +47,6 @@ The workflow runs Flutter analysis and tests, then compiles an unsigned iOS rele
 ## Food safety
 
 Keep raw meat and fish refrigerated promptly and thaw safely in the refrigerator. Ingredient lists are planning suggestions, not medical or nutrition advice. Adjust quantities and recipes to the household's needs.
+
+
+<!-- Rebuild after Android Gradle desugaring workflow correction. -->
