@@ -185,11 +185,11 @@ class _HomeFoodAppState extends State<HomeFoodApp> {
   int tab=0; DateTime selected=DateTime.now();
   @override Widget build(BuildContext context) {
     final mr=AppStore.marathi;
-    final pages=[HomePage(date:selected,onDate:(d)=>setState(()=>selected=d),onChanged:()=>setState((){})),const RecipesPage(),GroceryPage(date:selected),SettingsPage(onChanged:()=>setState((){}))];
+    final pages=[HomePage(date:selected,onDate:(d)=>setState(()=>selected=d),onChanged:()=>setState((){})),const RecipesPage(),GroceryPage(date:selected),PreparationPage(date:selected),SettingsPage(onChanged:()=>setState((){}))];
     return MaterialApp(debugShowCheckedModeBanner:false,title:'365 Days Home Food',theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xFF8A4B25)),useMaterial3:true,scaffoldBackgroundColor:const Color(0xFFFFFBF5)),
       home:Scaffold(appBar:AppBar(title:Text(mr?'३६५ दिवस घरगुती मेनू':'365 Days Home Food'),actions:[IconButton(onPressed:()=>setState(()=>selected=DateTime.now()),icon:const Icon(Icons.today))]),
       body:IndexedStack(index:tab,children:pages),bottomNavigationBar:NavigationBar(selectedIndex:tab,onDestinationSelected:(v)=>setState(()=>tab=v),destinations:[
-        NavigationDestination(icon:const Icon(Icons.calendar_month),label:mr?'मेनू':'Menu'),NavigationDestination(icon:const Icon(Icons.menu_book),label:mr?'पाककृती':'Recipes'),NavigationDestination(icon:const Icon(Icons.shopping_basket),label:mr?'खरेदी':'Grocery'),NavigationDestination(icon:const Icon(Icons.settings),label:mr?'सेटिंग':'Settings') ])));
+        NavigationDestination(icon:const Icon(Icons.calendar_month),label:mr?'मेनू':'Menu'),NavigationDestination(icon:const Icon(Icons.menu_book),label:mr?'पाककृती':'Recipes'),NavigationDestination(icon:const Icon(Icons.shopping_basket),label:mr?'खरेदी':'Grocery'),NavigationDestination(icon:const Icon(Icons.checklist),label:mr?'तयारी':'Prep'),NavigationDestination(icon:const Icon(Icons.settings),label:mr?'सेटिंग':'Settings') ])));
   }
 }
 class HomePage extends StatelessWidget {
@@ -550,6 +550,46 @@ class _GroceryPageState extends State<GroceryPage> {
     ]);
   }
 }
+class PreparationPage extends StatefulWidget {
+  final DateTime date;
+  const PreparationPage({super.key,required this.date});
+  @override State<PreparationPage> createState()=>_PreparationPageState();
+}
+class _PreparationPageState extends State<PreparationPage> {
+  String keyFor(DateTime day,int slot)=>'prep:${day.year}-${day.month}-${day.day}:$slot';
+  Future<void> toggle(String key,bool value) async {
+    final next=AppStore.checkedGroceries;
+    if(value){next.add(key);}else{next.remove(key);}
+    await AppStore.setChecked(next);
+    if(mounted)setState((){});
+  }
+  @override Widget build(BuildContext context) {
+    final mr=AppStore.marathi;
+    final weekStart=DateTime(widget.date.year,widget.date.month,widget.date.day).subtract(Duration(days:widget.date.weekday-1));
+    final days=List.generate(7,(i)=>weekStart.add(Duration(days:i)));
+    final saved=AppStore.checkedGroceries;
+    var total=0,done=0;
+    for(final day in days){for(var i=0;i<3;i++){total++;if(saved.contains(keyFor(day,i)))done++;}}
+    return ListView(padding:const EdgeInsets.all(16),children:[
+      Text(mr?'आठवड्याची जेवण तयारी':'Weekly meal preparation',style:Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight:FontWeight.bold)),
+      Text(mr?'तयारी पूर्ण झाल्यावर खूण करा. प्रगती आपोआप जतन होईल.':'Tick each meal after its prep is done. Progress saves automatically.'),
+      const SizedBox(height:8),
+      LinearProgressIndicator(value:total==0?0:done/total),
+      Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Text(mr?'${done} / ${total} तयारी पूर्ण':'${done} of ${total} meal prep tasks completed')),
+      Card(child:Padding(padding:const EdgeInsets.all(12),child:Text(mr?'डाळी आणि कडधान्ये योग्य वेळेपूर्वी भिजवा. नाशवंत पदार्थ झाकून फ्रिजमध्ये ठेवा.':'Soak pulses ahead of time. Keep perishable ingredients covered and refrigerated.'))),
+      for(final day in days) ...[
+        const SizedBox(height:8),
+        Card(child:Padding(padding:const EdgeInsets.all(8),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Padding(padding:const EdgeInsets.all(8),child:Text((mr?['सोमवार','मंगळवार','बुधवार','गुरुवार','शुक्रवार','शनिवार','रविवार'][day.weekday-1]:['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'][day.weekday-1])+' • '+day.day.toString()+'/'+day.month.toString(),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold))),
+          for(var i=0;i<3;i++)
+            CheckboxListTile(dense:true,controlAffinity:ListTileControlAffinity.leading,contentPadding:const EdgeInsets.symmetric(horizontal:8),value:saved.contains(keyFor(day,i)),title:Text((mr?['नाश्ता','दुपारचे जेवण','रात्रीचे जेवण'][i]:['Breakfast','Lunch','Dinner'][i])+' — '+MenuPlanner.forDate(day).meals[i].name(mr)),subtitle:Text(MenuPlanner.forDate(day).meals[i].prep),onChanged:(v)=>toggle(keyFor(day,i),v??false))
+        ])))
+      ],
+      OutlinedButton.icon(onPressed:() async {final next=AppStore.checkedGroceries..removeWhere((x)=>x.startsWith('prep:'));await AppStore.setChecked(next);if(mounted)setState((){});},icon:const Icon(Icons.restart_alt),label:Text(mr?'तयारीची खूण रीसेट करा':'Reset prep checklist'))
+    ]);
+  }
+}
+
 class SettingsPage extends StatefulWidget { final VoidCallback onChanged; const SettingsPage({super.key,required this.onChanged}); @override State<SettingsPage> createState()=>_SettingsPageState(); }
 class _SettingsPageState extends State<SettingsPage> {
   bool busy=false;
