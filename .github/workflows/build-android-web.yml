@@ -1,0 +1,87 @@
+name: Build Android APK and Web App
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - 'android/**'
+      - 'web/**'
+      - '.github/workflows/build-android-web.yml'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+jobs:
+  build-android-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate Android, iOS and web project files
+        run: flutter create --platforms=android,ios,web --org com.prasad.homefood .
+      - name: Enable Android core library desugaring for notifications
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('android/app/build.gradle.kts')
+          is_kts = p.exists()
+          if not is_kts:
+              p = Path('android/app/build.gradle')
+          s = p.read_text()
+          if is_kts:
+              if 'isCoreLibraryDesugaringEnabled = true' not in s:
+                  s, count = re.subn(r'compileOptions\\s*\\{', lambda m: m.group(0) + '\\n        isCoreLibraryDesugaringEnabled = true', s, count=1)
+                  if count == 0:
+                      raise SystemExit('Could not find compileOptions block')
+              dep = 'coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")'
+          else:
+              if 'coreLibraryDesugaringEnabled true' not in s:
+                  s, count = re.subn(r'compileOptions\\s*\\{', lambda m: m.group(0) + '\\n        coreLibraryDesugaringEnabled true', s, count=1)
+                  if count == 0:
+                      raise SystemExit('Could not find compileOptions block')
+              dep = "coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'"
+          if 'desugar_jdk_libs' not in s:
+              if re.search(r'dependencies\\s*\\{', s):
+                  s = re.sub(r'(dependencies\\s*\\{)', lambda m: m.group(1) + '\\n    ' + dep, s, count=1)
+              else:
+                  s += '\\n\\ndependencies {\\n    ' + dep + '\\n}\\n'
+          p.write_text(s)
+          if 'desugar_jdk_libs' not in p.read_text():
+              raise SystemExit('Failed to add desugar_jdk_libs dependency')
+          print('Configured core library desugaring in', p)
+          PY
+      - name: Install Flutter packages
+        run: flutter pub get
+      - name: Remove Flutter template test generated during project setup
+        run: rm -f test/widget_test.dart
+      - name: Analyze Dart code
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run tests
+        run: flutter test
+      - name: Build installable web app (PWA)
+        run: flutter build web --release
+      - name: Upload web app for hosting
+        uses: actions/upload-artifact@v4
+        with:
+          name: 365-days-home-food-web
+          path: build/web/
+          retention-days: 14
+      - name: Build Android APK
+        run: flutter build apk --release
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: 365-days-home-food-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14
