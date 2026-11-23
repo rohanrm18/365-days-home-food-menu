@@ -24,6 +24,8 @@ jobs:
           cache: true
       - name: Generate Android platform scaffold
         run: flutter create --platforms=android --org com.prasad.homefood .
+      - name: Remove generated sample test
+        run: rm -f test/widget_test.dart
       - name: Configure scheduled notification receivers
         run: python3 tool/patch_android_manifest.py
       - run: flutter pub get
