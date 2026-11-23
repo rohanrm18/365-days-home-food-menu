@@ -471,18 +471,37 @@ class RecipesPage extends StatefulWidget {
 }
 class _RecipesPageState extends State<RecipesPage> {
   bool favouritesOnly = false;
+  final TextEditingController searchController = TextEditingController();
+  @override void dispose() { searchController.dispose(); super.dispose(); }
   @override Widget build(BuildContext context) {
     final mr=AppStore.marathi;
+    final query=searchController.text.trim().toLowerCase();
     final all=[...breakfasts,...lunches,...dinners].toSet().toList();
-    final visible=all.where((meal)=>!favouritesOnly||AppStore.favourites.contains(meal.en)).toList();
+    final visible=all.where((meal) {
+      final favouriteMatch=!favouritesOnly||AppStore.favourites.contains(meal.en);
+      final searchMatch=query.isEmpty||meal.en.toLowerCase().contains(query)||meal.mr.toLowerCase().contains(query)||meal.ingredients.any((item)=>item.toLowerCase().contains(query));
+      return favouriteMatch&&searchMatch;
+    }).toList();
     return ListView(padding:const EdgeInsets.all(12),children:[
       Text(mr?'पाककृती आणि साहित्य':'Recipes and ingredients',style:Theme.of(context).textTheme.titleLarge),
+      const SizedBox(height:8),
+      TextField(
+        controller:searchController,
+        onChanged:(_)=>setState((){}),
+        decoration:InputDecoration(
+          prefixIcon:const Icon(Icons.search),
+          hintText:mr?'पाककृती किंवा साहित्य शोधा':'Search dish or ingredient',
+          border:const OutlineInputBorder(),
+          suffixIcon:query.isEmpty?null:IconButton(icon:const Icon(Icons.clear),onPressed:(){searchController.clear();setState((){});}),
+        ),
+      ),
       const SizedBox(height:8),
       Wrap(spacing:8,children:[
         ChoiceChip(label:Text(mr?'सर्व पाककृती':'All recipes'),selected:!favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=false)),
         ChoiceChip(label:Text(mr?'आवडत्या पाककृती':'Favourites'),selected:favouritesOnly,onSelected:(_)=>setState(()=>favouritesOnly=true)),
       ]),
-      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(mr?'अजून आवडती पाककृती निवडलेली नाही':'No favourite recipes yet. Tap the heart on a meal to save it.'))),
+      Padding(padding:const EdgeInsets.symmetric(vertical:6),child:Text(mr?'एकूण '+visible.length.toString()+' पाककृती':visible.length.toString()+' recipes found',style:Theme.of(context).textTheme.bodySmall)),
+      if(visible.isEmpty) Padding(padding:const EdgeInsets.all(24),child:Center(child:Text(query.isNotEmpty?(mr?'या शोधासाठी पाककृती सापडली नाही':'No recipes match your search'):(mr?'अजून आवडती पाककृती निवडलेली नाही':'No favourite recipes yet. Tap the heart on a meal to save it.')))),
       for(final meal in visible) Card(child:ExpansionTile(
         key:ValueKey(meal.en),
         title:Text(meal.name(mr)),
