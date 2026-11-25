@@ -85,8 +85,19 @@ const dinners = <Meal>[
   Meal('Fish curry and rice','मासे रस्सा आणि भात',['Fish','Rice','Coconut','Onion','Tamarind','Spices'],'Clean fish and refrigerate; prepare curry masala.'),
   Meal('Chicken pulao and salad','चिकन पुलाव आणि कोशिंबीर',['Chicken','Rice','Onion','Yogurt','Whole spices'],'Marinate chicken and refrigerate promptly.')
 ];
-const nonVegLunch = Meal('Chicken curry, rice and salad','चिकन रस्सा, भात आणि कोशिंबीर',['Chicken','Rice','Onion','Tomato','Ginger-garlic','Spices'],'Clean chicken and marinate; refrigerate promptly.');
 const nonVegDinner = Meal('Egg curry and chapati','अंडा करी आणि चपाती',['Eggs','Onion','Tomato','Wheat flour','Spices'],'Boil eggs; chop onion and tomato.');
+
+// The first 12 lunches and dinners are strictly vegetarian; the last two of each
+// list are the non-vegetarian dishes. Non-veg meals are only ever offered on
+// Tue/Wed/Fri/Sun (see MenuPlanner.isStrictVeg).
+final vegLunches = lunches.sublist(0, 12);
+final vegDinners = dinners.sublist(0, 12);
+final nonVegLunches = <Meal>[lunches[12], lunches[13]];
+final nonVegDinners = <Meal>[dinners[12], dinners[13], nonVegDinner];
+// Weekday that gets a non-veg lunch / dinner (everything else is vegetarian).
+// Change these two values to adjust how often non-veg is served.
+const nonVegLunchWeekday = DateTime.sunday;
+const nonVegDinnerWeekday = DateTime.wednesday;
 
 class MenuPlanner {
   static final Map<String, String> _overrides = {};
@@ -102,9 +113,7 @@ class MenuPlanner {
   static Future<void> replaceMeal(DateTime date, String slot) async {
     final menu = forDate(date);
     final current = slot == 'breakfast' ? menu.breakfast : slot == 'lunch' ? menu.lunch : menu.dinner;
-    final pool = slot == 'breakfast' ? breakfasts : slot == 'lunch'
-      ? (menu.strictVeg ? lunches.take(12).toList() : [...lunches, nonVegLunch])
-      : (menu.strictVeg ? dinners.take(12).toList() : [...dinners, nonVegDinner]);
+    final pool = _pool(slot, menu.strictVeg);
     // Keep one entry per dish, then move forward from the currently selected meal.
     // This avoids duplicate options and cycles through the available pool.
     final uniquePool = <String, Meal>{for (final meal in pool) meal.en: meal}.values.toList();
@@ -116,20 +125,28 @@ class MenuPlanner {
     await AppStore.saveMealOverrides(jsonEncode(_overrides));
   }
   static bool isStrictVeg(DateTime d) => [DateTime.monday, DateTime.thursday, DateTime.saturday].contains(d.weekday);
+  static List<Meal> _pool(String slot, bool veg) => slot == 'breakfast'
+      ? breakfasts
+      : slot == 'lunch'
+          ? (veg ? vegLunches : [...vegLunches, ...nonVegLunches])
+          : (veg ? vegDinners : [...vegDinners, ...nonVegDinners]);
   static DayMenu forDate(DateTime date) {
     final n = DateTime(date.year,date.month,date.day).difference(DateTime(2026,1,1)).inDays.abs();
+    final week = n ~/ 7;
     final veg = isStrictVeg(date);
-    final b = breakfasts[n % breakfasts.length];
-    final l = lunches[(n * 3 + 1) % (veg ? 12 : lunches.length)];
-    final d = dinners[(n * 5 + 2) % (veg ? 12 : dinners.length)];
-    final baseLunch = veg ? l : (n.isEven ? l : nonVegLunch);
-    final baseDinner = veg ? d : (n % 3 == 0 ? nonVegDinner : d);
-    Meal pick(Meal base, String slot, List<Meal> pool) {
+    // Multipliers are coprime with the pool sizes (14 / 12) so every dish comes
+    // round before repeating, including on the Mon/Thu/Sat veg days.
+    final b = breakfasts[(n + 2 * week) % breakfasts.length];
+    var l = vegLunches[(n * 5 + 1) % vegLunches.length];
+    var d = vegDinners[(n * 7 + 2) % vegDinners.length];
+    if (!veg && date.weekday == nonVegLunchWeekday) { l = nonVegLunches[week % nonVegLunches.length]; }
+    if (!veg && date.weekday == nonVegDinnerWeekday) { d = nonVegDinners[week % nonVegDinners.length]; }
+    Meal pick(Meal base, String slot) {
       final name = _overrides[_key(date, slot)];
-      for (final meal in pool) { if (meal.en == name) return meal; }
+      for (final meal in _pool(slot, veg)) { if (meal.en == name) return meal; }
       return base;
     }
-    return DayMenu(pick(b, 'breakfast', breakfasts), pick(baseLunch, 'lunch', veg ? lunches.take(12).toList() : [...lunches, nonVegLunch]), pick(baseDinner, 'dinner', veg ? dinners.take(12).toList() : [...dinners, nonVegDinner]), veg);
+    return DayMenu(pick(b, 'breakfast'), pick(l, 'lunch'), pick(d, 'dinner'), veg);
   }
 }
 class AppStore {
@@ -374,6 +391,11 @@ const Map<String, List<String>> _stepsEn = {
   'Stuffed capsicum and chapati':['Wash capsicums, remove tops and seeds while keeping them intact.','Boil and mash potato; mix with crushed peanuts, coriander, salt and mild spices.','Fill capsicums with the potato mixture.','Cook covered in a lightly oiled pan on low heat, turning gently until capsicums soften.','Serve with chapati.'],
   'Tomato pithla and bhakri':['Whisk besan with water until smooth; chop tomatoes and garlic.','Sauté garlic, tomato and spices in oil until tomatoes soften.','Add water and salt; bring to a gentle simmer.','Pour in besan mixture gradually while stirring; cook until thick and no raw besan taste remains.','Prepare jowar bhakri and serve hot.'],
   'Vegetable biryani and raita':['Wash and soak basmati rice for 20 minutes; drain.','Sauté whole spices, onion and vegetables; add yogurt, mint and biryani spices.','Layer rice over the vegetable masala and add measured hot water.','Cover tightly and cook on low heat until rice and vegetables are fully cooked; rest before opening.','Prepare cucumber raita and serve.'],
+  'Kanda bhaji':['Slice onions thinly and mix with besan, rice flour, chilli powder, salt and a pinch of turmeric.','Sprinkle a little water only if needed; the batter should just bind the onions.','Heat oil for deep frying until a drop of batter rises steadily.','Drop in small clusters and fry on medium heat until golden and crisp, turning once.','Drain on paper and serve hot with chutney.'],
+  'Dhokla':['Whisk besan, curd, salt, turmeric and water into a smooth, medium-thick batter; rest for 15 minutes.','Grease a plate and bring steamer water to a boil.','Stir lemon juice and a little fruit salt or baking soda into the batter and pour it in at once.','Steam covered for 12–15 minutes until a skewer comes out clean.','Temper mustard seeds, curry leaves and chilli in hot oil with a little water; pour over, cut into squares and serve.'],
+  'Bhel puri':['Chop onion, tomato and boil and dice the potato; chop coriander.','Put puffed rice in a large bowl.','Add the vegetables, a little salt and chilli powder.','Toss in tamarind and green chutneys just before serving.','Top with sev and coriander and serve immediately so it stays crisp.'],
+  'Roasted masala makhana':['Dry-roast makhana on low heat for 8–10 minutes, stirring, until crisp.','Warm ghee in a pan on low heat.','Add turmeric, chilli powder and salt, then the roasted makhana.','Toss for a minute until evenly coated.','Cool slightly and serve or store in an airtight jar.'],
+  'Vegetable cutlet':['Boil potato, carrot and peas until soft; drain well and mash.','Mix in spices, salt and chopped coriander; add a spoon of bread crumbs if the mixture is wet.','Shape into flat patties and coat with bread crumbs.','Shallow-fry or pan-toast with a little oil until golden on both sides.','Serve hot with chutney.'],
 };
 const Map<String, List<String>> _stepsMr = {
   'Poha':['पोहे चाळणीत घेऊन हलके धुवा, पाणी निथळू द्या आणि ५ मिनिटे ठेवा.','कढईत तेल गरम करून मोहरी, जिरे, कढीपत्ता आणि शेंगदाणे फोडणीला घाला.','कांदा व बटाटा घालून बटाटा मऊ होईपर्यंत शिजवा.','हळद, मीठ आणि पोहे मिसळून झाकण ठेवून मंद आचेवर ३–४ मिनिटे वाफवा.','कोथिंबीर व लिंबू घालून गरम वाढा.'],
@@ -418,6 +440,11 @@ const Map<String, List<String>> _stepsMr = {
   'Stuffed capsicum and chapati':['ढोबळी मिरची धुऊन देठाचा भाग व बिया काढा; आकार कायम ठेवा.','बटाटा उकडून कुस्करा; शेंगदाणे, कोथिंबीर, मीठ व मसाले मिसळा.','मिरच्यांत बटाट्याचे सारण भरा.','थोड्या तेलात झाकून मंद आचेवर मिरच्या मऊ होईपर्यंत शिजवा.','पोळीसोबत वाढा.'],
   'Tomato pithla and bhakri':['बेसन पाण्यात गुठळ्या न राहता कालवा; टोमॅटो व लसूण चिरा.','तेलात लसूण, टोमॅटो व मसाले परतून टोमॅटो मऊ करा.','पाणी व मीठ घालून मंद उकळी आणा.','बेसनाचे मिश्रण हळूहळू घालत सतत ढवळा; कच्चा वास जाईपर्यंत शिजवा.','ज्वारीची भाकरी करून गरम वाढा.'],
   'Vegetable biryani and raita':['बासमती तांदूळ धुऊन २० मिनिटे भिजवा व निथळा.','अख्खे मसाले, कांदा व भाज्या परतून दही, पुदिना व बिर्याणी मसाला घाला.','भाजीच्या मसाल्यावर तांदूळ थराने घालून मोजून गरम पाणी घाला.','झाकण घट्ट ठेवून मंद आचेवर तांदूळ व भाज्या पूर्ण शिजवा; उघडण्यापूर्वी थोडे ठेवा.','काकडी रायत्यासोबत वाढा.'],
+  'Kanda bhaji':['कांदा पातळ चिरून बेसन, तांदळाचे पीठ, तिखट, मीठ व चिमूटभर हळद मिसळा.','गरज असेल तेव्हाच थोडे पाणी शिंपडा; मिश्रण कांद्याला फक्त चिकटले पाहिजे.','तळण्यासाठी तेल गरम करा; पिठाचा थेंब हळूहळू वर आला पाहिजे.','छोटे गोळे घालून मध्यम आचेवर सोनेरी व कुरकुरीत होईपर्यंत उलटून तळा.','पेपरवर निथळून गरम चटणीसोबत वाढा.'],
+  'Dhokla':['बेसन, दही, मीठ, हळद व पाणी एकत्र करून मध्यम घट्ट पीठ करा; १५ मिनिटे ठेवा.','ताटाला तेल लावा आणि वाफवण्याचे पाणी उकळवा.','पिठात लिंबाचा रस व थोडा खाण्याचा सोडा/फ्रूट सॉल्ट मिसळून लगेच ताटात ओता.','झाकून १२–१५ मिनिटे वाफवा; सुरी स्वच्छ बाहेर आली पाहिजे.','गरम तेलात मोहरी, कढीपत्ता व मिरचीची फोडणी करून थोडे पाणी घाला; ढोकळ्यावर ओता, वड्या कापून वाढा.'],
+  'Bhel puri':['कांदा, टोमॅटो चिरा; बटाटा उकडून फोडी करा; कोथिंबीर चिरा.','मोठ्या भांड्यात मुरमुरे घ्या.','भाज्या, थोडे मीठ व तिखट घाला.','वाढण्याआधी चिंच व हिरवी चटणी मिसळा.','वरून शेव व कोथिंबीर घालून लगेच वाढा म्हणजे कुरकुरीत राहील.'],
+  'Roasted masala makhana':['मखाणा मंद आचेवर ८–१० मिनिटे ढवळत कुरकुरीत होईपर्यंत भाजा.','पॅनमध्ये मंद आचेवर तूप गरम करा.','हळद, तिखट व मीठ घालून भाजलेला मखाणा घाला.','एक मिनिट सर्वत्र मसाला लागेपर्यंत परता.','थोडा थंड करून वाढा किंवा हवाबंद डब्यात ठेवा.'],
+  'Vegetable cutlet':['बटाटा, गाजर व मटार मऊ उकडून निथळा आणि कुस्करा.','मसाले, मीठ व कोथिंबीर मिसळा; मिश्रण ओले असल्यास थोडा ब्रेडक्रम्ब घाला.','चपटे कटलेट करून ब्रेडक्रम्बमध्ये घोळवा.','थोड्या तेलात दोन्ही बाजूंनी सोनेरी होईपर्यंत भाजा/शॅलो फ्राय करा.','गरम चटणीसोबत वाढा.'],
 };
 List<String> recipeSteps(Meal meal, bool marathi) =>
     (marathi ? _stepsMr[meal.en] : _stepsEn[meal.en]) ??
@@ -482,7 +509,7 @@ class FestivalMenuCard extends StatelessWidget {
           children:[
             for(var i=0;i<festival.meals.length;i++) ListTile(
               title:Text((mr?['नाश्ता','दुपारचे जेवण','रात्रीचे जेवण'][i]:['Breakfast','Lunch','Dinner'][i])+' • '+festival.meals[i].name(mr)),
-              subtitle:Text((mr?'साहित्य: ':'Ingredients: ')+festival.meals[i].ingredients.join(', ')+'\\n'+(mr?'आधीची तयारी: ':'Advance prep: ')+festival.meals[i].prep),
+              subtitle:Text((mr?'साहित्य: ':'Ingredients: ')+festival.meals[i].ingredients.join(', ')+'\n'+(mr?'आधीची तयारी: ':'Advance prep: ')+festival.meals[i].prep),
               isThreeLine:true
             )
           ]
@@ -586,7 +613,7 @@ class _RecipesPageState extends State<RecipesPage> {
         children:[
           Padding(padding:const EdgeInsets.fromLTRB(12,8,12,4),child:MealPhoto(meal:meal)),
           Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:6),child:Text(mr?'वेळ: अंदाजे ३०–४५ मिनिटे • प्रमाण: '+AppStore.householdSize.toString()+' जण':'Cooking time: approx. 30–45 min • Serves: '+AppStore.householdSize.toString(),style:Theme.of(context).textTheme.bodySmall)),
-          ListTile(title:Text(mr?'साहित्याचे अंदाजे प्रमाण':'Estimated ingredient quantities'),subtitle:Text(meal.ingredients.map((item)=>item+' — '+groceryEstimate(item,1,AppStore.householdSize)).join('\\n'))),
+          ListTile(title:Text(mr?'साहित्याचे अंदाजे प्रमाण':'Estimated ingredient quantities'),subtitle:Text(meal.ingredients.map((item)=>item+' — '+groceryEstimate(item,1,AppStore.householdSize)).join('\n'))),
           ListTile(title:Text(mr?'आधीची तयारी':'Preparation'),subtitle:Text(meal.prep)),
           Padding(padding:const EdgeInsets.fromLTRB(16,8,16,4),child:Text(mr?'कृती — क्रमवार':'Step-by-step cooking instructions',style:Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight:FontWeight.bold))),
           for(final entry in recipeSteps(meal,mr).asMap().entries) ListTile(dense:true,leading:CircleAvatar(radius:14,child:Text('${entry.key+1}')),title:Text(entry.value))
@@ -623,7 +650,10 @@ String groceryEstimate(String item, int uses, [int people = 4]) {
     'Ragi flour':'200 g', 'Rajma':'250 g', 'Rice flour':'300 g',
     'Saffron':'a small pinch', 'Sesame seeds':'50 g', 'Small brinjal':'6 pieces',
     'Spinach':'1 bunch', 'Sugar':'100 g', 'Turmeric':'1 tsp',
-    'Vermicelli':'100 g'
+    'Vermicelli':'100 g',
+    'Oil':'4 tbsp', 'Salt':'1 tbsp', 'Mustard seeds':'1 tsp',
+    'Chilli powder':'1 tbsp', 'Makhana':'100 g', 'Puffed rice':'200 g',
+    'Chutneys':'100 g', 'Bread crumbs':'100 g'
   };
   final base = estimates[item] ?? 'small quantity; adjust to taste';
   final match = RegExp(r'^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))?\s*(.*)$').firstMatch(base);

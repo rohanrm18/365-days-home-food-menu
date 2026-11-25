@@ -11,6 +11,7 @@ tree = ET.parse(path)
 root = tree.getroot()
 
 permissions = {
+    "android.permission.INTERNET",
     "android.permission.POST_NOTIFICATIONS",
     "android.permission.RECEIVE_BOOT_COMPLETED",
     "android.permission.WAKE_LOCK",
