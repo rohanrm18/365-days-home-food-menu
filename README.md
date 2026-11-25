@@ -18,6 +18,16 @@ An iPhone-first Flutter application for Maharashtrian and Indian family meal pla
 
 The current app uses a small starter recipe bank rotated across dates. It is **not yet a fully curated, 365-day unique menu**. Recipe instructions and ingredient quantities are also starter guidance and need a complete editorial pass before relying on them as a household meal schedule. This is stated in the app's Settings screen as well.
 
+## Menu rotation
+
+- Monday, Thursday and Saturday are strictly vegetarian; all 12 vegetarian lunches and 12 vegetarian dinners rotate across them.
+- Non-vegetarian meals are served at most twice a week: a chicken/egg lunch on Sunday and a fish/chicken/egg dinner on Wednesday. Change `nonVegLunchWeekday` and `nonVegDinnerWeekday` in `lib/main.dart` to adjust this.
+- Breakfasts rotate so every breakfast appears on every weekday over a year.
+
+## Android build notes
+
+The CI workflows run `tool/patch_android_manifest.py` after `flutter create`. It adds the internet permission (meal photos), notification permission, and the reboot/scheduled-notification receivers that reminders need.
+
 ## Reminder behavior
 
 The app schedules reminders for 7:00 PM India time and includes the next day's meals, ingredients, and advance-preparation notes. Android/iOS notification permissions must be granted. Android uses inexact scheduling to avoid requiring exact-alarm access. The app currently queues 30 days and refreshes that queue when opened; users should open the app periodically. Notification display length can be limited by the operating system.

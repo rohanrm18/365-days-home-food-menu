@@ -9,6 +9,7 @@ on:
       - 'pubspec.yaml'
       - 'android/**'
       - 'web/**'
+      - 'tool/**'
       - '.github/workflows/build-android-web.yml'
       - 'README.md'
 
@@ -61,6 +62,8 @@ jobs:
               raise SystemExit('Failed to add desugar_jdk_libs dependency')
           print('Configured core library desugaring in', p)
           PY
+      - name: Add Android permissions and notification receivers
+        run: python3 tool/patch_android_manifest.py
       - name: Install Flutter packages
         run: flutter pub get
       - name: Remove Flutter template test generated during project setup
