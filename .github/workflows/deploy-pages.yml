@@ -1,0 +1,75 @@
+name: Publish web app to GitHub Pages
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'pubspec.yaml'
+      - 'web/**'
+      - '.github/workflows/deploy-pages.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Generate web project files
+        run: flutter create --platforms=web --org com.prasad.homefood .
+      - name: Name the app for the iPhone Home Screen
+        run: |
+          python3 - <<'PY'
+          import json, re
+          from pathlib import Path
+          name = '365 Days Home Food Menu'
+          short = '365 Food Menu'
+          m = Path('web/manifest.json')
+          data = json.loads(m.read_text())
+          data['name'] = name
+          data['short_name'] = short
+          data['description'] = 'Daily home food menu for the family'
+          m.write_text(json.dumps(data, indent=2))
+          i = Path('web/index.html')
+          html = i.read_text()
+          html = re.sub(r'<title>.*?</title>', '<title>' + name + '</title>', html, flags=re.S)
+          html = re.sub(r'(<meta name="apple-mobile-web-app-title" content=")[^"]*(")', lambda mo: mo.group(1) + short + mo.group(2), html)
+          i.write_text(html)
+          print('Web app named', name)
+          PY
+      - name: Install Flutter packages
+        run: flutter pub get
+      - name: Remove Flutter template test generated during project setup
+        run: rm -f test/widget_test.dart
+      - name: Build web app
+        run: flutter build web --release --base-href "/${{ github.event.repository.name }}/"
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

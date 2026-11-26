@@ -24,6 +24,12 @@ The current app uses a small starter recipe bank rotated across dates. It is **n
 - Non-vegetarian meals are served at most twice a week: a chicken/egg lunch on Sunday and a fish/chicken/egg dinner on Wednesday. Change `nonVegLunchWeekday` and `nonVegDinnerWeekday` in `lib/main.dart` to adjust this.
 - Breakfasts rotate so every breakfast appears on every weekday over a year.
 
+## iPhone install (web app on GitHub Pages)
+
+1. One-time: in the GitHub repo go to Settings > Pages and set Source to "GitHub Actions".
+2. Run the "Publish web app to GitHub Pages" workflow (or push to main). The link appears in the workflow summary and is normally `https://<github-user>.github.io/365-days-home-food-menu/`.
+3. On the iPhone open that link in Safari, tap Share, then "Add to Home Screen".
+
 ## Android build notes
 
 The CI workflows run `tool/patch_android_manifest.py` after `flutter create`. It adds the internet permission (meal photos), notification permission, and the reboot/scheduled-notification receivers that reminders need.
