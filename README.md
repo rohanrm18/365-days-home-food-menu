@@ -21,7 +21,7 @@ The current app uses a small starter recipe bank rotated across dates. It is **n
 ## Menu rotation
 
 - Monday, Thursday and Saturday are strictly vegetarian; all 17 vegetarian lunches and 18 vegetarian dinners rotate across them.
-- Non-vegetarian meals are served at most twice a week: a mutton/chicken/egg lunch on Sunday and a mutton/fish/chicken/prawn/egg dinner on Wednesday (about 60 mutton meals a year). Change `nonVegLunchWeekday` and `nonVegDinnerWeekday` in `lib/main.dart` to adjust this.
+- Non-vegetarian meals are served at most twice a week: a mutton/chicken/egg lunch on Sunday and a mutton/fish/chicken/prawn/egg dinner on Wednesday (about 55 mutton and 30 chicken meals a year). Change `nonVegLunchWeekday` and `nonVegDinnerWeekday` in `lib/main.dart` to adjust this.
 - Breakfasts rotate so every breakfast appears on every weekday over a year.
 
 ## iPhone install (web app on GitHub Pages)
