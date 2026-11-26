@@ -276,43 +276,71 @@ class HomePage extends StatelessWidget {
     ]);
   }
 }
-String mealPhotoUrl(Meal meal) {
-  final name = meal.en.toLowerCase();
-  String photo;
-  if (name.contains('poha') || name.contains('upma') || name.contains('idli') || name.contains('dosa') || name.contains('appe') || name.contains('thepla') || name.contains('paratha') || name.contains('chilla') || name.contains('thalipeeth') || name.contains('sabudana')) {
-    photo = 'photo-1547592180-85f173990554';
-  } else if (name.contains('biryani') || name.contains('pulao') || name.contains('rice') || name.contains('khichdi') || name.contains('bhaat')) {
-    photo = 'photo-1596797038530-2c107229654b';
-  } else if (name.contains('paneer') || name.contains('palak') || name.contains('curry') || name.contains('chole') || name.contains('rajma') || name.contains('usal') || name.contains('pithla') || name.contains('kadhi')) {
-    photo = 'photo-1565557623262-b51c2513a641';
-  } else if (name.contains('modak') || name.contains('poli') || name.contains('ladoo') || name.contains('karanji') || name.contains('shrikhand') || name.contains('cake') || name.contains('sheer') || name.contains('porridge')) {
-    photo = 'photo-1601050690597-df0568f70950';
-  } else if (name.contains('fish') || name.contains('chicken') || name.contains('egg')) {
-    photo = 'photo-1603894584373-5ac82b2ae398';
-  } else {
-    photo = 'photo-1585937421612-70a008356fbe';
-  }
-  return 'https://images.unsplash.com/' + photo + '?auto=format&fit=crop&w=1000&q=80';
+/// File name used for an optional real photo: assets/meals/<slug>.jpg
+String mealSlug(Meal meal) => meal.en
+    .toLowerCase()
+    .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+    .replaceAll(RegExp(r'^_+|_+$'), '');
+
+String mealEmoji(Meal meal) {
+  final n = meal.en.toLowerCase();
+  bool has(List<String> words) => words.any(n.contains);
+  if (has(['cake'])) return '🍰';
+  if (has(['sandwich'])) return '🥪';
+  if (has(['soup'])) return '🥣';
+  if (has(['chicken'])) return '🍗';
+  if (has(['fish'])) return '🐟';
+  if (has(['egg curry'])) return '🥚';
+  if (has(['modak', 'ladoo', 'karanji'])) return '🍬';
+  if (has(['shrikhand', 'sheer', 'porridge'])) return '🍮';
+  if (has(['puran poli', 'paratha', 'thepla', 'thalipeeth', 'bhakri', 'chapati', 'roti', 'puri'])) return '🍞';
+  if (has(['idli', 'dosa', 'appe', 'chilla'])) return '🥞';
+  if (has(['biryani', 'pulao', 'rice', 'khichdi', 'bhaat', 'poha', 'upma', 'dalia'])) return '🍚';
+  if (has(['misal'])) return '🌶️';
+  if (has(['bhel'])) return '🥗';
+  if (has(['makhana'])) return '🍿';
+  if (has(['dhokla', 'cutlet', 'bhaji', 'pakora'])) return '🥘';
+  if (has(['curry', 'masala', 'paneer', 'chole', 'rajma', 'usal', 'pithla', 'kadhi', 'stew', 'amti', 'dal', 'bharit', 'thali'])) return '🍛';
+  return '🍽️';
 }
 
+/// Shows a real photo if assets/meals/<slug>.jpg exists, otherwise a tile that is
+/// unique to the dish (its own colour, emoji and name) so no two dishes look alike.
 class MealPhoto extends StatelessWidget {
   final Meal meal;
-  const MealPhoto({super.key, required this.meal});
+  final bool marathi;
+  const MealPhoto({super.key, required this.meal, this.marathi = false});
+
+  Widget _tile(BuildContext context) {
+    var hash = 7;
+    for (final unit in meal.en.codeUnits) { hash = (hash * 31 + unit) & 0x7fffffff; }
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final hue = (hash % 360).toDouble();
+    final background = HSLColor.fromAHSL(1, hue, dark ? 0.35 : 0.6, dark ? 0.22 : 0.86).toColor();
+    final textColor = dark ? Colors.white : const Color(0xFF3A2A20);
+    return Container(
+      color: background,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(mealEmoji(meal), style: const TextStyle(fontSize: 44)),
+        const SizedBox(height: 6),
+        Text(meal.name(marathi), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Image.network(
-          mealPhotoUrl(meal),
+        child: Image.asset(
+          'assets/meals/${mealSlug(meal)}.jpg',
           fit: BoxFit.cover,
-          cacheWidth: 1000,
-          errorBuilder: (context, error, stackTrace) => Container(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            alignment: Alignment.center,
-            child: const Icon(Icons.restaurant, size: 42),
-          ),
+          errorBuilder: (context, error, stackTrace) => _tile(context),
         ),
       ),
     );
@@ -329,7 +357,7 @@ class MealCard extends StatelessWidget {
       Row(children:[Expanded(child:Text(title,style:Theme.of(context).textTheme.labelLarge?.copyWith(color:Theme.of(context).colorScheme.primary))),IconButton(tooltip:marathi?'जेवण बदला':'Replace meal',onPressed:onReplace,icon:const Icon(Icons.shuffle)),IconButton(onPressed:() async {await AppStore.toggleFavourite(meal.en);onChanged();},icon:Icon(fav?Icons.favorite:Icons.favorite_border,color:fav?Colors.red:null))]),
       Text(meal.name(marathi),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.bold)),
       const SizedBox(height:10),
-      MealPhoto(meal:meal),
+      MealPhoto(meal:meal,marathi:marathi),
       const SizedBox(height:6),Text((marathi?'साहित्य: ':'Ingredients: ')+meal.ingredients.join(', ')),
       Text((marathi?'आधीची तयारी: ':'Advance prep: ')+meal.prep),
       const SizedBox(height:8),
@@ -611,7 +639,7 @@ class _RecipesPageState extends State<RecipesPage> {
           onPressed:() async {await AppStore.toggleFavourite(meal.en);setState((){});},
         ),
         children:[
-          Padding(padding:const EdgeInsets.fromLTRB(12,8,12,4),child:MealPhoto(meal:meal)),
+          Padding(padding:const EdgeInsets.fromLTRB(12,8,12,4),child:MealPhoto(meal:meal,marathi:mr)),
           Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:6),child:Text(mr?'वेळ: अंदाजे ३०–४५ मिनिटे • प्रमाण: '+AppStore.householdSize.toString()+' जण':'Cooking time: approx. 30–45 min • Serves: '+AppStore.householdSize.toString(),style:Theme.of(context).textTheme.bodySmall)),
           ListTile(title:Text(mr?'साहित्याचे अंदाजे प्रमाण':'Estimated ingredient quantities'),subtitle:Text(meal.ingredients.map((item)=>item+' — '+groceryEstimate(item,1,AppStore.householdSize)).join('\n'))),
           ListTile(title:Text(mr?'आधीची तयारी':'Preparation'),subtitle:Text(meal.prep)),

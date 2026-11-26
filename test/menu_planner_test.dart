@@ -107,4 +107,16 @@ void main() {
       expect(recipeSteps(meal, true).first, isNot(startsWith('सर्व साहित्य स्वच्छ')), reason: 'MR steps: ${meal.en}');
     }
   });
+
+  test('every dish has its own photo file name and an emoji', () {
+    final dishes = <Meal>[...breakfasts, ...lunches, ...dinners, ...snacks, for (final f in festivalMenus) ...f.meals];
+    final slugs = <String, String>{};
+    for (final meal in dishes) {
+      final slug = mealSlug(meal);
+      expect(slug, isNotEmpty, reason: meal.en);
+      expect(slugs[slug] ?? meal.en, meal.en, reason: 'slug clash for $slug');
+      slugs[slug] = meal.en;
+      expect(mealEmoji(meal), isNotEmpty, reason: meal.en);
+    }
+  });
 }
