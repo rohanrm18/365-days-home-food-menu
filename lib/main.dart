@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'more_meals.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppStore.init();
@@ -37,7 +39,7 @@ class DayMenu {
   List<Meal> get meals => [breakfast, lunch, dinner];
 }
 
-const breakfasts = <Meal>[
+const _baseBreakfasts = <Meal>[
   Meal('Poha','पोहे',['Poha','Onion','Potato','Peanuts','Coriander','Lemon'],'Rinse poha; chop onion and potato.'),
   Meal('Upma','उपमा',['Rava','Onion','Carrot','Peas','Curry leaves'],'Chop vegetables; keep rava ready.'),
   Meal('Thalipeeth','थालीपीठ',['Bhajani flour','Onion','Coriander','Green chilli','Curd'],'Chop onion and coriander.'),
@@ -53,7 +55,8 @@ const breakfasts = <Meal>[
   Meal('Appe and coconut chutney','आप्पे आणि खोबऱ्याची चटणी',['Idli batter','Onion','Carrot','Coconut','Curry leaves'],'Check fermented batter; chop vegetables and prepare chutney.'),
   Meal('Ragi porridge and fruit','नाचणी सत्त्व आणि फळे',['Ragi flour','Milk','Banana','Jaggery','Cardamom'],'Measure ragi flour; wash and cut fruit just before serving.')
 ];
-const lunches = <Meal>[
+final breakfasts = <Meal>[..._baseBreakfasts, ...extraBreakfasts];
+const _baseLunches = <Meal>[
   Meal('Varan-bhaat, bhaji and koshimbir','वरण-भात, भाजी आणि कोशिंबीर',['Toor dal','Rice','Seasonal vegetables','Cucumber','Curd'],'Rinse dal and rice; chop vegetables.'),
   Meal('Pithla-bhakri','पिठलं-भाकरी',['Besan','Jowar flour','Garlic','Onion','Green chilli'],'Measure flour; peel garlic and chop onion.'),
   Meal('Matki usal and rice','मटकी उसळ आणि भात',['Matki','Rice','Onion','Tomato','Goda masala'],'Soak matki overnight for sprouting/softening.'),
@@ -69,7 +72,7 @@ const lunches = <Meal>[
   Meal('Chicken curry, rice and salad','चिकन रस्सा, भात आणि कोशिंबीर',['Chicken','Rice','Onion','Tomato','Ginger-garlic','Spices'],'Clean chicken and marinate; refrigerate promptly.'),
   Meal('Egg curry and chapati','अंडा करी आणि चपाती',['Eggs','Onion','Tomato','Wheat flour','Spices'],'Boil eggs; chop onion and tomato.')
 ];
-const dinners = <Meal>[
+const _baseDinners = <Meal>[
   Meal('Moong dal khichdi and kadhi','मूगडाळ खिचडी आणि कढी',['Rice','Moong dal','Curd','Besan','Ghee'],'Rinse rice and dal; keep curd ready.'),
   Meal('Chapati, seasonal bhaji and dal','पोळी, हंगामी भाजी आणि डाळ',['Wheat flour','Seasonal vegetables','Toor dal','Garlic'],'Knead dough and chop vegetables.'),
   Meal('Masale bhaat and raita','मसाले भात आणि रायता',['Rice','Mixed vegetables','Goda masala','Curd','Cucumber'],'Chop vegetables and cucumber.'),
@@ -87,13 +90,15 @@ const dinners = <Meal>[
 ];
 const nonVegDinner = Meal('Egg curry and chapati','अंडा करी आणि चपाती',['Eggs','Onion','Tomato','Wheat flour','Spices'],'Boil eggs; chop onion and tomato.');
 
-// The first 12 lunches and dinners are strictly vegetarian; the last two of each
-// list are the non-vegetarian dishes. Non-veg meals are only ever offered on
-// Tue/Wed/Fri/Sun (see MenuPlanner.isStrictVeg).
-final vegLunches = lunches.sublist(0, 12);
-final vegDinners = dinners.sublist(0, 12);
-final nonVegLunches = <Meal>[lunches[12], lunches[13]];
-final nonVegDinners = <Meal>[dinners[12], dinners[13], nonVegDinner];
+// The first 12 base lunches and dinners are strictly vegetarian and the rest of the
+// base lists are non-vegetarian; more_meals.dart adds further dishes of both kinds.
+// Non-veg meals are only ever offered on Tue/Wed/Fri/Sun (see MenuPlanner.isStrictVeg).
+final vegLunches = <Meal>[..._baseLunches.sublist(0, 12), ...extraVegLunches];
+final vegDinners = <Meal>[..._baseDinners.sublist(0, 12), ...extraVegDinners];
+final nonVegLunches = <Meal>[..._baseLunches.sublist(12), ...extraNonVegLunches];
+final nonVegDinners = <Meal>[..._baseDinners.sublist(12), nonVegDinner, ...extraNonVegDinners];
+final lunches = <Meal>[...vegLunches, ...nonVegLunches];
+final dinners = <Meal>[...vegDinners, ...nonVegDinners];
 // Weekday that gets a non-veg lunch / dinner (everything else is vegetarian).
 // Change these two values to adjust how often non-veg is served.
 const nonVegLunchWeekday = DateTime.sunday;
@@ -475,7 +480,7 @@ const Map<String, List<String>> _stepsMr = {
   'Vegetable cutlet':['बटाटा, गाजर व मटार मऊ उकडून निथळा आणि कुस्करा.','मसाले, मीठ व कोथिंबीर मिसळा; मिश्रण ओले असल्यास थोडा ब्रेडक्रम्ब घाला.','चपटे कटलेट करून ब्रेडक्रम्बमध्ये घोळवा.','थोड्या तेलात दोन्ही बाजूंनी सोनेरी होईपर्यंत भाजा/शॅलो फ्राय करा.','गरम चटणीसोबत वाढा.'],
 };
 List<String> recipeSteps(Meal meal, bool marathi) =>
-    (marathi ? _stepsMr[meal.en] : _stepsEn[meal.en]) ??
+    (marathi ? (_stepsMr[meal.en] ?? extraStepsMr[meal.en]) : (_stepsEn[meal.en] ?? extraStepsEn[meal.en])) ??
     (marathi ? ['सर्व साहित्य स्वच्छ करून मोजून घ्या.','कांदा व मसाले परतून मुख्य साहित्य घाला.','आवश्यकतेनुसार पाणी घालून पूर्ण शिजवा.','मीठ व मसाले चवीनुसार समायोजित करा.','गरम वाढा.'] :
     ['Wash and measure all ingredients.','Sauté onion and spices, then add the main ingredients.','Add water as needed and cook until fully done.','Adjust salt and seasoning to taste.','Serve hot.']);
 
@@ -547,13 +552,14 @@ class FestivalMenuCard extends StatelessWidget {
   }
 }
 
-const snacks = <Meal>[
+const _baseSnacks = <Meal>[
   Meal('Kanda bhaji','कांदा भजी',['Onion','Besan','Rice flour','Chilli powder','Oil'],'Slice onions; mix with flour and spices just before frying.'),
   Meal('Dhokla','ढोकळा',['Besan','Curd','Lemon','Mustard seeds','Curry leaves'],'Prepare batter and keep steamer ready.'),
   Meal('Bhel puri','भेळपुरी',['Puffed rice','Onion','Tomato','Potato','Chutneys','Coriander'],'Chop vegetables; mix just before serving to keep it crisp.'),
   Meal('Roasted masala makhana','मसाला मखाणा',['Makhana','Ghee','Turmeric','Chilli powder','Salt'],'Keep makhana and spices ready; roast shortly before serving.'),
   Meal('Vegetable cutlet','भाजी कटलेट',['Potato','Carrot','Peas','Bread crumbs','Spices'],'Boil and mash vegetables; shape cutlets and refrigerate until cooking.'),
 ];
+final snacks = <Meal>[..._baseSnacks, ...extraSnacks];
 class RecipesPage extends StatefulWidget {
   const RecipesPage({super.key});
   @override State<RecipesPage> createState() => _RecipesPageState();
@@ -683,7 +689,7 @@ String groceryEstimate(String item, int uses, [int people = 4]) {
     'Chilli powder':'1 tbsp', 'Makhana':'100 g', 'Puffed rice':'200 g',
     'Chutneys':'100 g', 'Bread crumbs':'100 g'
   };
-  final base = estimates[item] ?? 'small quantity; adjust to taste';
+  final base = estimates[item] ?? extraEstimates[item] ?? 'small quantity; adjust to taste';
   final match = RegExp(r'^(\d+(?:\.\d+)?)(?:–(\d+(?:\.\d+)?))?\s*(.*)$').firstMatch(base);
   if (match == null) return base + ' (adjust to taste)';
   final factor = uses * people / 4.0;
