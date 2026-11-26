@@ -20,8 +20,8 @@ The current app uses a small starter recipe bank rotated across dates. It is **n
 
 ## Menu rotation
 
-- Monday, Thursday and Saturday are strictly vegetarian; all 12 vegetarian lunches and 12 vegetarian dinners rotate across them.
-- Non-vegetarian meals are served at most twice a week: a chicken/egg lunch on Sunday and a fish/chicken/egg dinner on Wednesday. Change `nonVegLunchWeekday` and `nonVegDinnerWeekday` in `lib/main.dart` to adjust this.
+- Monday, Thursday and Saturday are strictly vegetarian; all 17 vegetarian lunches and 18 vegetarian dinners rotate across them.
+- Non-vegetarian meals are served at most twice a week: a mutton/chicken/egg lunch on Sunday and a mutton/fish/chicken/prawn/egg dinner on Wednesday (about 40 mutton meals a year). Change `nonVegLunchWeekday` and `nonVegDinnerWeekday` in `lib/main.dart` to adjust this.
 - Breakfasts rotate so every breakfast appears on every weekday over a year.
 
 ## iPhone install (web app on GitHub Pages)
@@ -29,6 +29,10 @@ The current app uses a small starter recipe bank rotated across dates. It is **n
 1. One-time: in the GitHub repo go to Settings > Pages and set Source to "GitHub Actions".
 2. Run the "Publish web app to GitHub Pages" workflow (or push to main). The link appears in the workflow summary and is normally `https://<github-user>.github.io/365-days-home-food-menu/`.
 3. On the iPhone open that link in Safari, tap Share, then "Add to Home Screen".
+
+## Adding dishes
+
+New dishes live in `lib/more_meals.dart`: add the `Meal`, its English and Marathi cooking steps (keyed by the English name) and a grocery quantity for any new ingredient. The tests fail if a dish is missing steps, a quantity, or has a veg-day conflict.
 
 ## Android build notes
 

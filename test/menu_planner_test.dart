@@ -50,19 +50,19 @@ void main() {
     expect(groceryEstimate('Saffron', 2), contains('adjust to taste'));
   });
 
-  const nonVegNames = ['Chicken', 'Fish', 'Eggs'];
+  const nonVegNames = ['Chicken', 'Fish', 'Eggs', 'Mutton', 'Prawns'];
   bool hasNonVeg(Meal m) => m.ingredients.any(nonVegNames.contains);
   final year = [for (var i = 0; i < 365; i++) DateTime(2026, 1, 1).add(Duration(days: i))];
 
-  test('all 12 vegetarian lunches and dinners are used on veg days', () {
+  test('every vegetarian lunch and dinner is used on veg days', () {
     final lunchesUsed = <String>{}, dinnersUsed = <String>{};
     for (final date in year.where(MenuPlanner.isStrictVeg)) {
       final menu = MenuPlanner.forDate(date);
       lunchesUsed.add(menu.lunch.en);
       dinnersUsed.add(menu.dinner.en);
     }
-    expect(lunchesUsed.length, 12);
-    expect(dinnersUsed.length, 12);
+    expect(lunchesUsed.length, vegLunches.length);
+    expect(dinnersUsed.length, vegDinners.length);
   });
 
   test('every breakfast is served on every weekday over a year', () {
@@ -117,6 +117,25 @@ void main() {
       expect(slugs[slug] ?? meal.en, meal.en, reason: 'slug clash for $slug');
       slugs[slug] = meal.en;
       expect(mealEmoji(meal), isNotEmpty, reason: meal.en);
+    }
+  });
+
+  test('there are many more recipes and mutton dishes are served', () {
+    final all = {for (final m in [...breakfasts, ...lunches, ...dinners, ...snacks]) m.en};
+    expect(all.length, greaterThanOrEqualTo(70));
+    final mutton = <String>{};
+    for (final date in year) {
+      final menu = MenuPlanner.forDate(date);
+      for (final meal in [menu.lunch, menu.dinner]) {
+        if (meal.ingredients.contains('Mutton')) mutton.add(meal.en);
+      }
+    }
+    expect(mutton.length, greaterThanOrEqualTo(4), reason: 'mutton dishes served over a year');
+  });
+
+  test('no vegetarian dish contains meat, fish or egg ingredients', () {
+    for (final meal in [...vegLunches, ...vegDinners, ...breakfasts, ...snacks]) {
+      expect(hasNonVeg(meal), isFalse, reason: meal.en);
     }
   });
 }
