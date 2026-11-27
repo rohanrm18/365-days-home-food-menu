@@ -345,7 +345,11 @@ class MealPhoto extends StatelessWidget {
         child: Image.asset(
           'assets/meals/${mealSlug(meal)}.jpg',
           fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _tile(context),
+          errorBuilder: (context, error, stackTrace) => Image.asset(
+            'assets/meals/${mealSlug(meal)}.png',
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) => _tile(context),
+          ),
         ),
       ),
     );
