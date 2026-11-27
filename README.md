@@ -30,6 +30,10 @@ The current app uses a small starter recipe bank rotated across dates. It is **n
 2. Run the "Publish web app to GitHub Pages" workflow (or push to main). The link appears in the workflow summary and is normally `https://<github-user>.github.io/365-days-home-food-menu/`.
 3. On the iPhone open that link in Safari, tap Share, then "Add to Home Screen".
 
+## Dish photos
+
+Every dish shows a coloured tile until a photo is added. See `docs/dish-photos.md` for the file name and a free-picture prompt for each of the 109 dishes; photos go in `assets/meals/` (`.jpg` or `.png`).
+
 ## Adding dishes
 
 New dishes live in `lib/more_meals.dart`: add the `Meal`, its English and Marathi cooking steps (keyed by the English name) and a grocery quantity for any new ingredient. The tests fail if a dish is missing steps, a quantity, or has a veg-day conflict.
